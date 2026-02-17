@@ -1,6 +1,5 @@
 import React from 'react';
 import { ItineraryItem, Activity } from '../types';
-import { convertCurrency } from '../services/gemini';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface BudgetProps {
@@ -21,7 +20,7 @@ const Budget: React.FC<BudgetProps> = ({ itinerary, pins, travelerCount, current
   const myActivitiesTotalEUR = myActivities.reduce((sum, item) => sum + item.costEUR, 0);
 
   const myTotalEUR = itineraryPerPersonEUR + myActivitiesTotalEUR;
-  const myTotalGBP = convertCurrency(myTotalEUR);
+  const myTotalGBP = myTotalEUR * 0.85;
 
   const allVoters = new Set<string>();
   pins.forEach(p => Object.keys(p.votes).forEach(name => allVoters.add(name)));
