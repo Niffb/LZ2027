@@ -133,7 +133,7 @@ export default function App() {
   const nightsCount = trip ? Math.max(0, Math.round((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
   if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-100"><p className="text-sm text-slate-400">Loading...</p></div>;
+    return <div className="min-h-screen min-h-dvh flex items-center justify-center bg-slate-100 px-4"><p className="text-sm text-slate-400">Loading...</p></div>;
   }
 
   if (!user) {
@@ -143,8 +143,8 @@ export default function App() {
 
   if (!trip && !showTripForm) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-center max-w-sm">
+      <div className="min-h-screen min-h-dvh bg-slate-100 flex items-center justify-center px-4 py-6">
+        <div className="text-center w-full max-w-sm">
           <h1 className="text-xl font-semibold text-slate-900 mb-2">No Trip Planned</h1>
           <p className="text-sm text-slate-500 mb-6">{user.isAdmin ? 'Create your first trip to get started.' : 'An admin needs to create a trip first.'}</p>
           {user.isAdmin && (
@@ -160,8 +160,8 @@ export default function App() {
 
   if (showTripForm || editingTrip) {
     return (
-      <div className="min-h-screen bg-slate-100 p-6">
-        <div className="max-w-lg mx-auto">
+      <div className="min-h-screen min-h-dvh bg-slate-100 p-4 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-lg mx-auto w-full">
           <TripForm trip={editingTrip ? trip : null} onSave={handleTripSave} onCancel={() => { setShowTripForm(false); setEditingTrip(false); }} />
         </div>
       </div>
@@ -176,10 +176,10 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen min-h-dvh bg-slate-100">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-white border-b border-slate-200 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-4 h-14 flex items-center justify-between">
           <div className="hidden md:flex items-center gap-1">
             {tabs.map(tab => (
               <button
@@ -208,13 +208,14 @@ export default function App() {
           </div>
         </div>
 
-        {/* Mobile tabs */}
+        {/* Mobile tabs - larger touch targets */}
         <div className="md:hidden flex border-t border-slate-100">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2.5 flex justify-center ${activeTab === tab.id ? 'text-primary border-b-2 border-primary' : 'text-slate-400'}`}
+              className={`flex-1 py-3 min-h-[44px] flex justify-center items-center touch-target ${activeTab === tab.id ? 'text-primary border-b-2 border-primary font-medium' : 'text-slate-400'}`}
+              aria-label={tab.label}
             >
               {tab.icon}
             </button>
@@ -223,20 +224,20 @@ export default function App() {
       </nav>
 
       {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-4 py-4 sm:py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {activeTab === 'dashboard' && trip && (
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {/* Hero + Countdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-              <div className="lg:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-xl p-6 text-white relative overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-5">
+              <div className="lg:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-xl p-4 sm:p-6 text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4"></div>
-                <h1 className="text-2xl font-bold mb-1">{trip.destination}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold mb-1">{trip.destination}</h1>
                 <p className="text-indigo-200 text-sm flex items-center gap-1.5 mb-5">
                   <Calendar size={14} />
                   {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}
                 </p>
-                <div className="flex gap-3">
-                  <div className="bg-white/15 backdrop-blur-sm rounded-lg px-3.5 py-2">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  <div className="bg-white/15 backdrop-blur-sm rounded-lg px-3.5 py-2 min-w-[70px]">
                     <span className="block text-xl font-bold">{trip.travelers}</span>
                     <span className="text-[10px] text-indigo-200 uppercase tracking-wider">Travelers</span>
                   </div>
@@ -250,14 +251,14 @@ export default function App() {
             </div>
 
             {/* Info cards row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               <HotelInfoCard hotels={hotels} tripId={trip.id} isAdmin={user.isAdmin} onRefresh={refreshTravelInfo} />
               <FlightInfoCard flights={flights} tripId={trip.id} isAdmin={user.isAdmin} onRefresh={refreshTravelInfo} />
               <Members members={members} />
             </div>
 
             {/* Suggestions + Upcoming */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
               <div className="card p-5">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
