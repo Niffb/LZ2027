@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
+// Always returns the single hardcoded trip
 router.get('/', requireAuth, (_req, res) => {
   res.json([TRIP]);
 });

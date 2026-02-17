@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { ADMIN_NAME } from './data/config.js';
 
 const dbPath = path.join(import.meta.dirname, '..', 'data.db');
 const db = new Database(dbPath);
@@ -52,5 +53,8 @@ db.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
+// Ensure the admin name always has admin privileges if they've already joined
+db.prepare('UPDATE users SET is_admin = 1 WHERE LOWER(name) = LOWER(?)').run(ADMIN_NAME);
 
 export default db;
