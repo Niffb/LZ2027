@@ -135,7 +135,7 @@ app.post('/api/auth/signup', async (req: any, res) => {
       const isAdmin = nameMatch(trimmedName, ADMIN_NAME) ? 1 : 0;
       await db.from('users').update({ password_hash: hash, is_admin: isAdmin }).eq('id', existing.id);
       const { data: u } = await db.from('users').select('id, name, is_admin').eq('id', existing.id).single();
-      req.session = req.session || {}; req.session.userId = u.id;
+      req.session.userId = u.id;
       return res.json({ id: u.id, name: u.name, isAdmin: !!u.is_admin });
     }
     return res.status(400).json({ error: 'Name already taken. Sign in instead.' });
@@ -145,7 +145,7 @@ app.post('/api/auth/signup', async (req: any, res) => {
   const isAdmin = nameMatch(trimmedName, ADMIN_NAME) ? 1 : 0;
   const { data: user, error } = await db.from('users').insert({ name: trimmedName, password_hash: hash, is_admin: isAdmin }).select('id, name, is_admin').single();
   if (error) return res.status(500).json({ error: error.message });
-  req.session = req.session || {}; req.session.userId = user.id;
+  req.session.userId = user.id;
   res.json({ id: user.id, name: user.name, isAdmin: !!user.is_admin });
 });
 
@@ -160,7 +160,7 @@ app.post('/api/auth/signin', async (req: any, res) => {
   if (!ok) return res.status(401).json({ error: 'Invalid name or password' });
   const isAdmin = nameMatch(user.name, ADMIN_NAME) ? 1 : 0;
   if (isAdmin !== user.is_admin) await db.from('users').update({ is_admin: isAdmin }).eq('id', user.id);
-  req.session = req.session || {}; req.session.userId = user.id;
+  req.session.userId = user.id;
   res.json({ id: user.id, name: user.name, isAdmin: !!isAdmin });
 });
 

@@ -44,7 +44,7 @@ router.post('/signup', async (req, res) => {
       const isAdmin = nameMatch(trimmedName, ADMIN_NAME) ? 1 : 0;
       await supabase.from('users').update({ password_hash: passwordHash, is_admin: isAdmin }).eq('id', existing.id);
       const { data: u } = await supabase.from('users').select('id, name, is_admin').eq('id', existing.id).single();
-      req.session = req.session || {}; req.session.userId = u.id;
+      req.session.userId = u.id;
       return res.json({ id: u.id, name: u.name, isAdmin: !!u.is_admin });
     }
     return res.status(400).json({ error: 'Name already taken. Sign in instead.' });
@@ -61,7 +61,7 @@ router.post('/signup', async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  req.session = req.session || {}; req.session.userId = user.id;
+  req.session.userId = user.id;
   res.json({ id: user.id, name: user.name, isAdmin: !!user.is_admin });
 });
 
@@ -94,7 +94,7 @@ router.post('/signin', async (req, res) => {
     await supabase.from('users').update({ is_admin: isAdmin }).eq('id', user.id);
   }
 
-  req.session = req.session || {}; req.session.userId = user.id;
+  req.session.userId = user.id;
   res.json({ id: user.id, name: user.name, isAdmin: !!isAdmin });
 });
 
