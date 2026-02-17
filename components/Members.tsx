@@ -1,10 +1,9 @@
 import React from 'react';
-import { Users, Shield, Mail } from 'lucide-react';
+import { Users, Shield } from 'lucide-react';
 
 interface Member {
   id: number;
   name: string;
-  email: string;
   isAdmin: boolean;
   joinedAt: string;
 }
@@ -27,6 +26,9 @@ const Members: React.FC<MembersProps> = ({ members }) => {
         <span className="ml-auto text-xs font-medium text-slate-400">{members.length}</span>
       </h2>
       <div className="space-y-2">
+        {members.length === 0 && (
+          <p className="text-xs text-slate-400">No one has joined yet.</p>
+        )}
         {members.map((member, i) => (
           <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors">
             <div className={`w-8 h-8 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
@@ -35,13 +37,10 @@ const Members: React.FC<MembersProps> = ({ members }) => {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-medium text-slate-800 truncate">{member.name}</p>
-                {member.isAdmin && (
-                  <Shield size={12} className="text-primary shrink-0" />
-                )}
+                {member.isAdmin && <Shield size={12} className="text-primary shrink-0" />}
               </div>
-              <p className="text-xs text-slate-400 truncate flex items-center gap-1">
-                <Mail size={10} />
-                {member.email}
+              <p className="text-[11px] text-slate-400">
+                Joined {new Date(member.joinedAt).toLocaleDateString()}
               </p>
             </div>
           </div>

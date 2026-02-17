@@ -2,28 +2,24 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { User, Activity, ItineraryItem, TripDetails, HotelInfo, FlightInfo } from './types';
 import { API_BASE } from './lib/api';
 import Login from './components/Login';
-import Register from './components/Register';
 import Countdown from './components/Countdown';
 import Itinerary from './components/Itinerary';
 import PinBoard from './components/PinBoard';
 import Budget from './components/Budget';
-import TripForm from './components/TripForm';
 import HotelInfoCard from './components/HotelInfo';
 import FlightInfoCard from './components/FlightInfo';
 import Members from './components/Members';
-import { Plus, MapPin, Calendar, LayoutDashboard, LogOut, Settings, DollarSign } from 'lucide-react';
+import { MapPin, Calendar, LayoutDashboard, LogOut, DollarSign } from 'lucide-react';
 
 interface Member {
   id: number;
   name: string;
-  email: string;
   isAdmin: boolean;
   joinedAt: string;
 }
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [authView, setAuthView] = useState<'login' | 'register'>('login');
   const [authLoading, setAuthLoading] = useState(true);
 
   const [trip, setTrip] = useState<TripDetails | null>(null);
@@ -33,8 +29,6 @@ export default function App() {
   const [flights, setFlights] = useState<FlightInfo[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'itinerary' | 'pins' | 'budget'>('dashboard');
-  const [showTripForm, setShowTripForm] = useState(false);
-  const [editingTrip, setEditingTrip] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
@@ -55,10 +49,16 @@ export default function App() {
 
       if (!tripsRes.ok) return;
       const trips = await tripsRes.json();
-      if (trips.length === 0) { setTrip(null); return; }
+      if (trips.length === 0) return;
 
       const t = trips[0];
-      const currentTrip: TripDetails = { id: t.id, destination: t.destination, startDate: t.start_date, endDate: t.end_date, travelers: t.travelers };
+      const currentTrip: TripDetails = {
+        id: t.id,
+        destination: t.destination,
+        startDate: t.start_date,
+        endDate: t.end_date,
+        travelers: t.travelers,
+      };
       setTrip(currentTrip);
 
       const [itinRes, actRes, hotelRes, flightRes] = await Promise.all([
@@ -70,7 +70,15 @@ export default function App() {
 
       if (itinRes.ok) {
         const items = await itinRes.json();
-        setItinerary(items.map((i: any) => ({ id: String(i.id), day: i.day, time: i.time, activity: i.activity, location: i.location, costEUR: i.cost_eur, notes: i.notes })));
+        setItinerary(items.map((i: any) => ({
+          id: String(i.id),
+          day: i.day,
+          time: i.time,
+          activity: i.activity,
+          location: i.location,
+          costEUR: i.cost_eur,
+          notes: i.notes,
+        })));
       }
       if (actRes.ok) setPins(await actRes.json());
       if (hotelRes.ok) setHotels(await hotelRes.json());
@@ -82,17 +90,26 @@ export default function App() {
 
   useEffect(() => { if (user) loadTripData(); }, [user, loadTripData]);
 
-  const handleLogin = (u: User) => setUser(u);
-
   const handleLogout = async () => {
     await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-    setUser(null); setTrip(null); setItinerary([]); setPins([]); setHotels([]); setFlights([]); setMembers([]);
+    setUser(null);
+    setTrip(null);
+    setItinerary([]);
+    setPins([]);
+    setHotels([]);
+    setFlights([]);
+    setMembers([]);
   };
 
   const addPin = async (pin: Activity) => {
     if (!trip) return;
     try {
-      const res = await fetch(`${API_BASE}/api/trips/${trip.id}/activities`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ title: pin.title, description: pin.description, costEUR: pin.costEUR, link: pin.link }) });
+      const res = await fetch(`${API_BASE}/api/trips/${trip.id}/activities`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ title: pin.title, description: pin.description, costEUR: pin.costEUR, link: pin.link }),
+      });
       if (res.ok) { const newPin = await res.json(); setPins([...pins, newPin]); }
     } catch (err) { console.error('Failed to add activity:', err); }
   };
@@ -104,10 +121,23 @@ export default function App() {
   const addToItinerary = async (item: ItineraryItem) => {
     if (!trip) return;
     try {
-      const res = await fetch(`${API_BASE}/api/trips/${trip.id}/itinerary`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ day: item.day, time: item.time, activity: item.activity, location: item.location, costEUR: item.costEUR, notes: item.notes }) });
+      const res = await fetch(`${API_BASE}/api/trips/${trip.id}/itinerary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ day: item.day, time: item.time, activity: item.activity, location: item.location, costEUR: item.costEUR, notes: item.notes }),
+      });
       if (res.ok) {
         const n = await res.json();
-        setItinerary([...itinerary, { id: String(n.id), day: n.day, time: n.time, activity: n.activity, location: n.location, costEUR: n.cost_eur, notes: n.notes }]);
+        setItinerary([...itinerary, {
+          id: String(n.id),
+          day: n.day,
+          time: n.time,
+          activity: n.activity,
+          location: n.location,
+          costEUR: n.cost_eur,
+          notes: n.notes,
+        }]);
       }
     } catch (err) { console.error('Failed to add itinerary item:', err); }
   };
@@ -116,56 +146,20 @@ export default function App() {
     addToItinerary({ id: '', day: 1, time: '10:00', activity: pin.title, location: pin.description, costEUR: pin.costEUR });
   };
 
-  const handleTripSave = (savedTrip: TripDetails) => {
-    setTrip(savedTrip); setShowTripForm(false); setEditingTrip(false); loadTripData();
-  };
-
-  const refreshTravelInfo = async () => {
-    if (!trip) return;
-    const [hotelRes, flightRes] = await Promise.all([
-      fetch(`${API_BASE}/api/trips/${trip.id}/hotels`, { credentials: 'include' }),
-      fetch(`${API_BASE}/api/trips/${trip.id}/flights`, { credentials: 'include' }),
-    ]);
-    if (hotelRes.ok) setHotels(await hotelRes.json());
-    if (flightRes.ok) setFlights(await flightRes.json());
-  };
-
-  const nightsCount = trip ? Math.max(0, Math.round((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24))) : 0;
+  const nightsCount = trip
+    ? Math.max(0, Math.round((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
 
   if (authLoading) {
-    return <div className="min-h-screen min-h-dvh flex items-center justify-center bg-slate-100 px-4"><p className="text-sm text-slate-400">Loading...</p></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <p className="text-sm text-slate-400">Loading...</p>
+      </div>
+    );
   }
 
   if (!user) {
-    if (authView === 'register') return <Register onRegister={handleLogin} onSwitchToLogin={() => setAuthView('login')} />;
-    return <Login onLogin={handleLogin} onSwitchToRegister={() => setAuthView('register')} />;
-  }
-
-  if (!trip && !showTripForm) {
-    return (
-      <div className="min-h-screen min-h-dvh bg-slate-100 flex items-center justify-center px-4 py-6">
-        <div className="text-center w-full max-w-sm">
-          <h1 className="text-xl font-semibold text-slate-900 mb-2">No Trip Planned</h1>
-          <p className="text-sm text-slate-500 mb-6">{user.isAdmin ? 'Create your first trip to get started.' : 'An admin needs to create a trip first.'}</p>
-          {user.isAdmin && (
-            <button onClick={() => setShowTripForm(true)} className="bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 mx-auto hover:bg-primary-dark transition-colors">
-              <Plus size={16} /> Create Trip
-            </button>
-          )}
-          <button onClick={handleLogout} className="mt-4 text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 mx-auto"><LogOut size={12} /> Sign out</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (showTripForm || editingTrip) {
-    return (
-      <div className="min-h-screen min-h-dvh bg-slate-100 p-4 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div className="max-w-lg mx-auto w-full">
-          <TripForm trip={editingTrip ? trip : null} onSave={handleTripSave} onCancel={() => { setShowTripForm(false); setEditingTrip(false); }} />
-        </div>
-      </div>
-    );
+    return <Login onLogin={setUser} />;
   }
 
   const tabs = [
@@ -179,7 +173,7 @@ export default function App() {
     <div className="min-h-screen min-h-dvh bg-slate-100">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white border-b border-slate-200 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-4 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="hidden md:flex items-center gap-1">
             {tabs.map(tab => (
               <button
@@ -197,24 +191,23 @@ export default function App() {
               <p className="text-xs font-medium text-slate-800">{user.name}</p>
               <p className="text-[10px] text-slate-400">{user.isAdmin ? 'Admin' : 'Member'}</p>
             </div>
-            {user.isAdmin && (
-              <button onClick={() => setEditingTrip(true)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary-light rounded-md transition-colors" title="Edit Trip">
-                <Settings size={16} />
-              </button>
-            )}
-            <button onClick={handleLogout} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Sign out">
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+              title="Sign out"
+            >
               <LogOut size={16} />
             </button>
           </div>
         </div>
 
-        {/* Mobile tabs - larger touch targets */}
+        {/* Mobile tabs */}
         <div className="md:hidden flex border-t border-slate-100">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 min-h-[44px] flex justify-center items-center touch-target ${activeTab === tab.id ? 'text-primary border-b-2 border-primary font-medium' : 'text-slate-400'}`}
+              className={`flex-1 py-3 min-h-[44px] flex justify-center items-center ${activeTab === tab.id ? 'text-primary border-b-2 border-primary font-medium' : 'text-slate-400'}`}
               aria-label={tab.label}
             >
               {tab.icon}
@@ -224,7 +217,7 @@ export default function App() {
       </nav>
 
       {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-4 py-4 sm:py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <main className="max-w-6xl mx-auto px-4 py-4 sm:py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {activeTab === 'dashboard' && trip && (
           <div className="space-y-4 sm:space-y-5">
             {/* Hero + Countdown */}
@@ -250,10 +243,10 @@ export default function App() {
               <Countdown targetDate={trip.startDate} />
             </div>
 
-            {/* Info cards row */}
+            {/* Info cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-              <HotelInfoCard hotels={hotels} tripId={trip.id} isAdmin={user.isAdmin} onRefresh={refreshTravelInfo} />
-              <FlightInfoCard flights={flights} tripId={trip.id} isAdmin={user.isAdmin} onRefresh={refreshTravelInfo} />
+              <HotelInfoCard hotels={hotels} tripId={trip.id} isAdmin={user.isAdmin} onRefresh={loadTripData} />
+              <FlightInfoCard flights={flights} tripId={trip.id} isAdmin={user.isAdmin} onRefresh={loadTripData} />
               <Members members={members} />
             </div>
 
@@ -275,7 +268,9 @@ export default function App() {
                         <p className="text-sm font-medium text-slate-800">{pin.title}</p>
                         <p className="text-[11px] text-slate-500">By {pin.proposedBy}</p>
                       </div>
-                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{Object.values(pin.votes).filter(v => v === 'yes').length} yes</span>
+                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                        {Object.values(pin.votes).filter(v => v === 'yes').length} yes
+                      </span>
                     </div>
                   ))}
                 </div>

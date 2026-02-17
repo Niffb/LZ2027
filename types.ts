@@ -1,9 +1,7 @@
 export interface User {
   id: number;
   name: string;
-  email: string;
   isAdmin: boolean;
-  avatar?: string;
 }
 
 export interface TripDetails {
