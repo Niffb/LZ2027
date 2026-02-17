@@ -23,6 +23,8 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
 
   const [trip, setTrip] = useState<TripDetails | null>(null);
+  const [tripLoading, setTripLoading] = useState(true);
+  const [tripError, setTripError] = useState<string | null>(null);
   const [itinerary, setItinerary] = useState<ItineraryItem[]>([]);
   const [pins, setPins] = useState<Activity[]>([]);
   const [hotels, setHotels] = useState<HotelInfo[]>([]);
@@ -39,6 +41,8 @@ export default function App() {
   }, []);
 
   const loadTripData = useCallback(async () => {
+    setTripLoading(true);
+    setTripError(null);
     try {
       const [tripsRes, membersRes] = await Promise.all([
         fetch(`${API_BASE}/api/trips`, { credentials: 'include' }),
@@ -47,9 +51,15 @@ export default function App() {
 
       if (membersRes.ok) setMembers(await membersRes.json());
 
-      if (!tripsRes.ok) return;
+      if (!tripsRes.ok) {
+        setTripError(tripsRes.status === 401 ? 'Session expired. Please sign in again.' : 'Couldn\'t load trip. Please refresh.');
+        return;
+      }
       const trips = await tripsRes.json();
-      if (trips.length === 0) return;
+      if (trips.length === 0) {
+        setTripError('No trip found.');
+        return;
+      }
 
       const t = trips[0];
       const currentTrip: TripDetails = {
@@ -85,6 +95,9 @@ export default function App() {
       if (flightRes.ok) setFlights(await flightRes.json());
     } catch (err) {
       console.error('Failed to load trip data:', err);
+      setTripError('Failed to load trip. Please try again.');
+    } finally {
+      setTripLoading(false);
     }
   }, []);
 
@@ -213,6 +226,23 @@ export default function App() {
 
       {/* Content */}
       <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {tripLoading && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <Sun size={32} className="text-amber-400 mb-4 animate-spin" style={{ animationDuration: '2s' }} />
+            <p className="text-sm text-slate-500">Loading your trip...</p>
+          </div>
+        )}
+        {!tripLoading && tripError && (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <p className="text-slate-600 text-center mb-4">{tripError}</p>
+            <button
+              onClick={() => loadTripData()}
+              className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark"
+            >
+              Try again
+            </button>
+          </div>
+        )}
         {activeTab === 'dashboard' && trip && (
           <div className="space-y-3 sm:space-y-5">
             {/* Hero + Countdown */}
