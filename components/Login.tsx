@@ -4,7 +4,7 @@ import { API_BASE } from '../lib/api';
 import { ArrowRight, LogIn, Sun } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: (user: User) => void;
+  onLogin: (user: User & { token?: string }) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -24,7 +24,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ name: name.trim(), password, inviteCode: inviteCode.trim() }),
       });
       if (res.status === 404) {
@@ -50,7 +49,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const res = await fetch(`${API_BASE}/api/auth/signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ name: name.trim(), password }),
       });
       if (res.status === 404) {

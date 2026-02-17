@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, Activity, ItineraryItem, TripDetails, HotelInfo, FlightInfo } from './types';
-import { API_BASE } from './lib/api';
+import { API_BASE, apiFetch, setToken, clearToken } from './lib/api';
 import Login from './components/Login';
 import Countdown from './components/Countdown';
 import Itinerary from './components/Itinerary';
@@ -33,7 +33,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'itinerary' | 'pins' | 'budget'>('dashboard');
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
+    apiFetch(`${API_BASE}/api/auth/me`)
       .then(res => res.ok ? res.json() : null)
       .then(data => { if (data) setUser(data); })
       .catch(() => {})
@@ -45,8 +45,8 @@ export default function App() {
     setTripError(null);
     try {
       const [tripsRes, membersRes] = await Promise.all([
-        fetch(`${API_BASE}/api/trips`, { credentials: 'include' }),
-        fetch(`${API_BASE}/api/members`, { credentials: 'include' }),
+        apiFetch(`${API_BASE}/api/trips`),
+        apiFetch(`${API_BASE}/api/members`),
       ]);
 
       if (membersRes.ok) setMembers(await membersRes.json());
@@ -72,10 +72,10 @@ export default function App() {
       setTrip(currentTrip);
 
       const [itinRes, actRes, hotelRes, flightRes] = await Promise.all([
-        fetch(`${API_BASE}/api/trips/${t.id}/itinerary`, { credentials: 'include' }),
-        fetch(`${API_BASE}/api/trips/${t.id}/activities`, { credentials: 'include' }),
-        fetch(`${API_BASE}/api/trips/${t.id}/hotels`, { credentials: 'include' }),
-        fetch(`${API_BASE}/api/trips/${t.id}/flights`, { credentials: 'include' }),
+        apiFetch(`${API_BASE}/api/trips/${t.id}/itinerary`),
+        apiFetch(`${API_BASE}/api/trips/${t.id}/activities`),
+        apiFetch(`${API_BASE}/api/trips/${t.id}/hotels`),
+        apiFetch(`${API_BASE}/api/trips/${t.id}/flights`),
       ]);
 
       if (itinRes.ok) {
@@ -103,8 +103,14 @@ export default function App() {
 
   useEffect(() => { if (user) loadTripData(); }, [user, loadTripData]);
 
+  const handleLogin = useCallback((data: User & { token?: string }) => {
+    if (data.token) setToken(data.token);
+    setUser({ id: data.id, name: data.name, isAdmin: data.isAdmin });
+  }, []);
+
   const handleLogout = async () => {
-    await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+    await apiFetch(`${API_BASE}/api/auth/logout`, { method: 'POST' });
+    clearToken();
     setUser(null);
     setTrip(null);
     setItinerary([]);
@@ -117,10 +123,9 @@ export default function App() {
   const addPin = async (pin: Activity) => {
     if (!trip) return;
     try {
-      const res = await fetch(`${API_BASE}/api/trips/${trip.id}/activities`, {
+      const res = await apiFetch(`${API_BASE}/api/trips/${trip.id}/activities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ title: pin.title, description: pin.description, costEUR: pin.costEUR, link: pin.link }),
       });
       if (res.ok) { const newPin = await res.json(); setPins([...pins, newPin]); }
@@ -134,10 +139,9 @@ export default function App() {
   const addToItinerary = async (item: ItineraryItem) => {
     if (!trip) return;
     try {
-      const res = await fetch(`${API_BASE}/api/trips/${trip.id}/itinerary`, {
+      const res = await apiFetch(`${API_BASE}/api/trips/${trip.id}/itinerary`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ day: item.day, time: item.time, activity: item.activity, location: item.location, costEUR: item.costEUR, notes: item.notes }),
       });
       if (res.ok) {
@@ -180,7 +184,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <Login onLogin={setUser} />;
+    return <Login onLogin={handleLogin} />;
   }
 
   const tabs = [

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Activity, User } from '../types';
-import { API_BASE } from '../lib/api';
+import { apiFetch, API_BASE } from '../lib/api';
 import { ThumbsUp, ThumbsDown, Plus, CalendarPlus, X } from 'lucide-react';
 
 interface PinBoardProps {
@@ -20,7 +20,7 @@ const PinBoard: React.FC<PinBoardProps> = ({ pins, currentUser, onAddPin, onUpda
 
   const handleVote = async (pin: Activity, vote: 'yes' | 'no') => {
     try {
-      await fetch(`${API_BASE}/api/activities/${pin.id}/vote`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ vote }) });
+      await apiFetch(`${API_BASE}/api/activities/${pin.id}/vote`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vote }) });
       const updatedVotes = { ...pin.votes, [currentUser.name]: vote };
       onUpdatePin({ ...pin, votes: updatedVotes });
     } catch (err) {
@@ -30,7 +30,7 @@ const PinBoard: React.FC<PinBoardProps> = ({ pins, currentUser, onAddPin, onUpda
 
   const handleComment = async (pin: Activity, text: string) => {
     try {
-      await fetch(`${API_BASE}/api/activities/${pin.id}/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ text }) });
+      await apiFetch(`${API_BASE}/api/activities/${pin.id}/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
       const updatedComments = [...pin.comments, { user: currentUser.name, text }];
       onUpdatePin({ ...pin, comments: updatedComments });
     } catch (err) {

@@ -1,9 +1,9 @@
 import express from 'express';
-import cookieSession from 'cookie-session';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 dotenv.config({ path: '.env.local' });
@@ -70,34 +70,50 @@ const FLIGHTS = [
 
 const nameMatch = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
+const JWT_SECRET = process.env.SESSION_SECRET || 'holiday-dashboard-family-secret';
+const JWT_EXPIRES_IN = '7d';
+
+function signToken(userId: string): string {
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+function verifyToken(token: string): { userId: string } | null {
+  try {
+    return jwt.verify(token, JWT_SECRET) as { userId: string };
+  } catch {
+    return null;
+  }
+}
+
 // ── Middleware ─────────────────────────────────────────────────────────────────
+function extractUser(req: any, _res: any, next: any) {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    const payload = verifyToken(authHeader.slice(7));
+    if (payload) req.userId = payload.userId;
+  }
+  next();
+}
+
 function requireAuth(req: any, res: any, next: any) {
-  if (!req.session?.userId) return res.status(401).json({ error: 'Not authenticated' });
+  if (!req.userId) return res.status(401).json({ error: 'Not authenticated' });
   next();
 }
 
 async function requireAdmin(req: any, res: any, next: any) {
-  if (!req.session?.userId) return res.status(401).json({ error: 'Not authenticated' });
-  const db = (req as any).db;
-  const { data: user } = await db.from('users').select('is_admin').eq('id', req.session.userId).single();
+  if (!req.userId) return res.status(401).json({ error: 'Not authenticated' });
+  const db = req.db;
+  const { data: user } = await db.from('users').select('is_admin').eq('id', req.userId).single();
   if (!user || !user.is_admin) return res.status(403).json({ error: 'Admin access required' });
   next();
 }
 
 // ── Express app ───────────────────────────────────────────────────────────────
-const isProduction = process.env.NODE_ENV === 'production';
 const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(cookieSession({
-  name: 'session',
-  keys: [process.env.SESSION_SECRET || 'holiday-dashboard-family-secret'],
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  secure: isProduction,
-  sameSite: 'lax',
-  httpOnly: true,
-}));
+app.use(extractUser);
 
 // Inject DB
 app.use('/api', (req: any, res, next) => {
@@ -135,8 +151,8 @@ app.post('/api/auth/signup', async (req: any, res) => {
       const isAdmin = nameMatch(trimmedName, ADMIN_NAME) ? 1 : 0;
       await db.from('users').update({ password_hash: hash, is_admin: isAdmin }).eq('id', existing.id);
       const { data: u } = await db.from('users').select('id, name, is_admin').eq('id', existing.id).single();
-      req.session.userId = u.id;
-      return res.json({ id: u.id, name: u.name, isAdmin: !!u.is_admin });
+      const token = signToken(u.id);
+      return res.json({ id: u.id, name: u.name, isAdmin: !!u.is_admin, token });
     }
     return res.status(400).json({ error: 'Name already taken. Sign in instead.' });
   }
@@ -145,8 +161,8 @@ app.post('/api/auth/signup', async (req: any, res) => {
   const isAdmin = nameMatch(trimmedName, ADMIN_NAME) ? 1 : 0;
   const { data: user, error } = await db.from('users').insert({ name: trimmedName, password_hash: hash, is_admin: isAdmin }).select('id, name, is_admin').single();
   if (error) return res.status(500).json({ error: error.message });
-  req.session.userId = user.id;
-  res.json({ id: user.id, name: user.name, isAdmin: !!user.is_admin });
+  const token = signToken(user.id);
+  res.json({ id: user.id, name: user.name, isAdmin: !!user.is_admin, token });
 });
 
 app.post('/api/auth/signin', async (req: any, res) => {
@@ -160,19 +176,18 @@ app.post('/api/auth/signin', async (req: any, res) => {
   if (!ok) return res.status(401).json({ error: 'Invalid name or password' });
   const isAdmin = nameMatch(user.name, ADMIN_NAME) ? 1 : 0;
   if (isAdmin !== user.is_admin) await db.from('users').update({ is_admin: isAdmin }).eq('id', user.id);
-  req.session.userId = user.id;
-  res.json({ id: user.id, name: user.name, isAdmin: !!isAdmin });
+  const token = signToken(user.id);
+  res.json({ id: user.id, name: user.name, isAdmin: !!isAdmin, token });
 });
 
-app.post('/api/auth/logout', (req: any, res) => {
-  req.session = null;
+app.post('/api/auth/logout', (_req: any, res) => {
   res.json({ ok: true });
 });
 
 app.get('/api/auth/me', async (req: any, res) => {
-  if (!req.session?.userId) return res.status(401).json({ error: 'Not authenticated' });
+  if (!req.userId) return res.status(401).json({ error: 'Not authenticated' });
   const db = req.db;
-  const { data: user, error } = await db.from('users').select('id, name, is_admin').eq('id', req.session.userId).single();
+  const { data: user, error } = await db.from('users').select('id, name, is_admin').eq('id', req.userId).single();
   if (error || !user) return res.status(401).json({ error: 'User not found' });
   res.json({ id: user.id, name: user.name, isAdmin: !!user.is_admin });
 });
@@ -249,9 +264,9 @@ app.post('/api/trips/:tripId/activities', requireAdmin, async (req: any, res) =>
   const db = req.db;
   const { title, description, costEUR, link } = req.body;
   const tripId = parseInt(req.params.tripId, 10);
-  const { data: activity, error } = await db.from('activities').insert({ trip_id: tripId, title, description: description ?? '', proposed_by: req.session.userId, cost_eur: costEUR ?? 0, link: link ?? null }).select('id, title, description, cost_eur, link').single();
+  const { data: activity, error } = await db.from('activities').insert({ trip_id: tripId, title, description: description ?? '', proposed_by: req.userId, cost_eur: costEUR ?? 0, link: link ?? null }).select('id, title, description, cost_eur, link').single();
   if (error) return res.status(500).json({ error: error.message });
-  const { data: proposer } = await db.from('users').select('name').eq('id', req.session.userId).single();
+  const { data: proposer } = await db.from('users').select('name').eq('id', req.userId).single();
   res.json({ id: activity.id, title: activity.title, description: activity.description ?? '', proposedBy: proposer?.name ?? 'Unknown', costEUR: activity.cost_eur ?? 0, link: activity.link ?? null, votes: {}, comments: [] });
 });
 
@@ -259,7 +274,7 @@ app.post('/api/activities/:id/vote', requireAuth, async (req: any, res) => {
   const { vote } = req.body;
   if (!['yes', 'no'].includes(vote)) return res.status(400).json({ error: 'Vote must be yes or no' });
   const db = req.db;
-  const { error } = await db.from('votes').upsert({ activity_id: req.params.id, user_id: req.session.userId, vote }, { onConflict: 'activity_id,user_id' });
+  const { error } = await db.from('votes').upsert({ activity_id: req.params.id, user_id: req.userId, vote }, { onConflict: 'activity_id,user_id' });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
@@ -268,7 +283,7 @@ app.post('/api/activities/:id/comment', requireAuth, async (req: any, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Text is required' });
   const db = req.db;
-  const { error } = await db.from('comments').insert({ activity_id: req.params.id, user_id: req.session.userId, text });
+  const { error } = await db.from('comments').insert({ activity_id: req.params.id, user_id: req.userId, text });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });

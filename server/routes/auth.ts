@@ -1,15 +1,12 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { INVITE_CODE, ADMIN_NAME } from '../data/config.js';
+import { signToken } from '../app.js';
 
 const router = Router();
 
 const nameMatch = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-/**
- * POST /api/auth/signup
- * name, password, inviteCode
- */
 router.post('/signup', async (req, res) => {
   const supabase = (req as any).db;
   const { name, password, inviteCode } = req.body;
@@ -44,8 +41,8 @@ router.post('/signup', async (req, res) => {
       const isAdmin = nameMatch(trimmedName, ADMIN_NAME) ? 1 : 0;
       await supabase.from('users').update({ password_hash: passwordHash, is_admin: isAdmin }).eq('id', existing.id);
       const { data: u } = await supabase.from('users').select('id, name, is_admin').eq('id', existing.id).single();
-      req.session.userId = u.id;
-      return res.json({ id: u.id, name: u.name, isAdmin: !!u.is_admin });
+      const token = signToken(u.id);
+      return res.json({ id: u.id, name: u.name, isAdmin: !!u.is_admin, token });
     }
     return res.status(400).json({ error: 'Name already taken. Sign in instead.' });
   }
@@ -61,14 +58,10 @@ router.post('/signup', async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  req.session.userId = user.id;
-  res.json({ id: user.id, name: user.name, isAdmin: !!user.is_admin });
+  const token = signToken(user.id);
+  res.json({ id: user.id, name: user.name, isAdmin: !!user.is_admin, token });
 });
 
-/**
- * POST /api/auth/signin
- * name, password
- */
 router.post('/signin', async (req, res) => {
   const supabase = (req as any).db;
   const { name, password } = req.body;
@@ -94,19 +87,18 @@ router.post('/signin', async (req, res) => {
     await supabase.from('users').update({ is_admin: isAdmin }).eq('id', user.id);
   }
 
-  req.session.userId = user.id;
-  res.json({ id: user.id, name: user.name, isAdmin: !!isAdmin });
+  const token = signToken(user.id);
+  res.json({ id: user.id, name: user.name, isAdmin: !!isAdmin, token });
 });
 
-router.post('/logout', (req, res) => {
-  req.session = null;
+router.post('/logout', (_req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/me', async (req, res) => {
-  if (!req.session?.userId) return res.status(401).json({ error: 'Not authenticated' });
-  const supabase = (req as any).db;
-  const { data: user, error } = await supabase.from('users').select('id, name, is_admin').eq('id', req.session.userId).single();
+router.get('/me', async (req: any, res) => {
+  if (!req.userId) return res.status(401).json({ error: 'Not authenticated' });
+  const supabase = req.db;
+  const { data: user, error } = await supabase.from('users').select('id, name, is_admin').eq('id', req.userId).single();
   if (error || !user) return res.status(401).json({ error: 'User not found' });
   res.json({ id: user.id, name: user.name, isAdmin: !!user.is_admin });
 });

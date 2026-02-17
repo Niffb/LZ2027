@@ -54,7 +54,7 @@ router.post('/trips/:tripId/activities', requireAdmin, async (req, res) => {
       trip_id: tripId,
       title,
       description: description ?? '',
-      proposed_by: req.session.userId,
+      proposed_by: req.userId,
       cost_eur: costEUR ?? 0,
       link: link ?? null,
     })
@@ -63,7 +63,7 @@ router.post('/trips/:tripId/activities', requireAdmin, async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  const { data: proposer } = await supabase.from('users').select('name').eq('id', req.session.userId).single();
+  const { data: proposer } = await supabase.from('users').select('name').eq('id', req.userId).single();
 
   res.json({
     id: activity.id,
@@ -86,7 +86,7 @@ router.post('/activities/:id/vote', requireAuth, async (req, res) => {
   const { error } = await supabase.from('votes').upsert(
     {
       activity_id: req.params.id,
-      user_id: req.session.userId,
+      user_id: req.userId,
       vote,
     },
     { onConflict: 'activity_id,user_id' }
@@ -101,7 +101,7 @@ router.post('/activities/:id/comment', requireAuth, async (req, res) => {
   const supabase = (req as any).db;
   const { error } = await supabase.from('comments').insert({
     activity_id: req.params.id,
-    user_id: req.session.userId,
+    user_id: req.userId,
     text,
   });
   if (error) return res.status(500).json({ error: error.message });

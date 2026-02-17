@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { HotelInfo as HotelInfoType } from '../types';
-import { API_BASE } from '../lib/api';
+import { apiFetch, API_BASE } from '../lib/api';
 import { Building2, Plus, X, Edit2, Check } from 'lucide-react';
 
 interface HotelInfoProps {
@@ -26,7 +26,7 @@ const HotelInfoCard: React.FC<HotelInfoProps> = ({ hotels, tripId, isAdmin, onRe
     if (!form.name) return;
     const url = editingId ? `${API_BASE}/api/hotels/${editingId}` : `${API_BASE}/api/trips/${tripId}/hotels`;
     const method = editingId ? 'PUT' : 'POST';
-    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(form) });
+    await apiFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
     resetForm();
     onRefresh();
   };
@@ -38,7 +38,7 @@ const HotelInfoCard: React.FC<HotelInfoProps> = ({ hotels, tripId, isAdmin, onRe
   };
 
   const handleDelete = async (id: number) => {
-    await fetch(`${API_BASE}/api/hotels/${id}`, { method: 'DELETE', credentials: 'include' });
+    await apiFetch(`${API_BASE}/api/hotels/${id}`, { method: 'DELETE' });
     onRefresh();
   };
 

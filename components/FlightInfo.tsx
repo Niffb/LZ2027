@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FlightInfo as FlightInfoType } from '../types';
-import { API_BASE } from '../lib/api';
+import { apiFetch, API_BASE } from '../lib/api';
 import { Plane, Plus, X, Edit2, Check } from 'lucide-react';
 
 interface FlightInfoProps {
@@ -26,7 +26,7 @@ const FlightInfoCard: React.FC<FlightInfoProps> = ({ flights, tripId, isAdmin, o
     if (!form.airline) return;
     const url = editingId ? `${API_BASE}/api/flights/${editingId}` : `${API_BASE}/api/trips/${tripId}/flights`;
     const method = editingId ? 'PUT' : 'POST';
-    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(form) });
+    await apiFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
     resetForm();
     onRefresh();
   };
@@ -38,7 +38,7 @@ const FlightInfoCard: React.FC<FlightInfoProps> = ({ flights, tripId, isAdmin, o
   };
 
   const handleDelete = async (id: number) => {
-    await fetch(`${API_BASE}/api/flights/${id}`, { method: 'DELETE', credentials: 'include' });
+    await apiFetch(`${API_BASE}/api/flights/${id}`, { method: 'DELETE' });
     onRefresh();
   };
 

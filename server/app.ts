@@ -1,6 +1,6 @@
 import express from 'express';
-import cookieSession from 'cookie-session';
 import cors from 'cors';
+import jwt from 'jsonwebtoken';
 import { getDb, getDbError } from './db.js';
 import authRoutes from './routes/auth.js';
 import tripRoutes from './routes/trips.js';
@@ -9,24 +9,35 @@ import activityRoutes from './routes/activities.js';
 import travelInfoRoutes from './routes/travel-info.js';
 import memberRoutes from './routes/members.js';
 
-const isProduction = process.env.NODE_ENV === 'production';
+export const JWT_SECRET = process.env.SESSION_SECRET || 'holiday-dashboard-family-secret';
+export const JWT_EXPIRES_IN = '7d';
+
+export function signToken(userId: string): string {
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+export function verifyToken(token: string): { userId: string } | null {
+  try {
+    return jwt.verify(token, JWT_SECRET) as { userId: string };
+  } catch {
+    return null;
+  }
+}
 
 const app = express();
 
-app.use(cors({
-  origin: true,
-  credentials: true,
-}));
-
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(cookieSession({
-  name: 'session',
-  keys: [process.env.SESSION_SECRET || 'holiday-dashboard-family-secret'],
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  secure: isProduction,
-  sameSite: 'lax',
-  httpOnly: true,
-}));
+
+// Extract userId from Bearer token on every request
+app.use((req: any, _res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    const payload = verifyToken(authHeader.slice(7));
+    if (payload) req.userId = payload.userId;
+  }
+  next();
+});
 
 app.get('/api/health', (_req, res) => {
   const dbErr = getDbError();
