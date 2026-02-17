@@ -1,90 +1,117 @@
 import { Router } from 'express';
-import db from '../db.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
 
-// Get all activities for a trip (with votes and comments joined)
-router.get('/trips/:tripId/activities', requireAuth, (req, res) => {
-  const activities = db.prepare(
-    'SELECT a.*, u.name as proposed_by_name FROM activities a LEFT JOIN users u ON a.proposed_by = u.id WHERE a.trip_id = ?'
-  ).all(req.params.tripId) as any[];
+router.get('/trips/:tripId/activities', requireAuth, async (req, res) => {
+  const supabase = (req as any).db;
+  const tripId = parseInt(req.params.tripId, 10);
 
-  const result = activities.map(a => {
-    const votes = db.prepare(
-      'SELECT v.vote, u.name FROM votes v JOIN users u ON v.user_id = u.id WHERE v.activity_id = ?'
-    ).all(a.id) as any[];
+  const { data: activitiesData, error: actErr } = await supabase
+    .from('activities')
+    .select('id, title, description, cost_eur, link, proposed_by')
+    .eq('trip_id', tripId);
 
-    const comments = db.prepare(
-      'SELECT c.*, u.name as user_name FROM comments c JOIN users u ON c.user_id = u.id WHERE c.activity_id = ? ORDER BY c.created_at ASC'
-    ).all(a.id) as any[];
+  if (actErr) return res.status(500).json({ error: actErr.message });
 
+  const ids = (activitiesData ?? []).map((a: any) => a.id);
+  const [allVotes, allComments, allUsers] = await Promise.all([
+    ids.length ? supabase.from('votes').select('activity_id, vote, user_id').in('activity_id', ids) : { data: [] },
+    ids.length ? supabase.from('comments').select('activity_id, text, user_id').in('activity_id', ids) : { data: [] },
+    supabase.from('users').select('id, name'),
+  ]);
+
+  const usersMap = new Map((allUsers.data ?? []).map((u: any) => [u.id, u.name]));
+
+  const result = (activitiesData ?? []).map((a: any) => {
+    const votes = (allVotes.data ?? []).filter((v: any) => v.activity_id === a.id);
+    const comments = (allComments.data ?? []).filter((c: any) => c.activity_id === a.id);
     const votesMap: Record<string, string> = {};
-    votes.forEach(v => { votesMap[v.name] = v.vote; });
-
+    votes.forEach((v: any) => { votesMap[usersMap.get(v.user_id) ?? 'Unknown'] = v.vote; });
     return {
-      id: String(a.id),
+      id: a.id,
       title: a.title,
       description: a.description,
-      proposedBy: a.proposed_by_name || 'Unknown',
+      proposedBy: usersMap.get(a.proposed_by) ?? 'Unknown',
       costEUR: a.cost_eur,
       link: a.link,
       votes: votesMap,
-      comments: comments.map(c => ({ user: c.user_name, text: c.text }))
+      comments: comments.map((c: any) => ({ user: usersMap.get(c.user_id) ?? 'Unknown', text: c.text })),
     };
   });
 
   res.json(result);
 });
 
-router.post('/trips/:tripId/activities', requireAdmin, (req, res) => {
+router.post('/trips/:tripId/activities', requireAdmin, async (req, res) => {
+  const supabase = (req as any).db;
   const { title, description, costEUR, link } = req.body;
-  const result = db.prepare(
-    'INSERT INTO activities (trip_id, title, description, proposed_by, cost_eur, link) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(req.params.tripId, title, description || '', req.session.userId, costEUR || 0, link || null);
+  const tripId = parseInt(req.params.tripId, 10);
 
-  const activity = db.prepare(
-    'SELECT a.*, u.name as proposed_by_name FROM activities a LEFT JOIN users u ON a.proposed_by = u.id WHERE a.id = ?'
-  ).get(result.lastInsertRowid) as any;
+  const { data: activity, error } = await supabase
+    .from('activities')
+    .insert({
+      trip_id: tripId,
+      title,
+      description: description ?? '',
+      proposed_by: req.session.userId,
+      cost_eur: costEUR ?? 0,
+      link: link ?? null,
+    })
+    .select('id, title, description, cost_eur, link')
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const { data: proposer } = await supabase.from('users').select('name').eq('id', req.session.userId).single();
 
   res.json({
-    id: String(activity.id),
+    id: activity.id,
     title: activity.title,
-    description: activity.description,
-    proposedBy: activity.proposed_by_name,
-    costEUR: activity.cost_eur,
-    link: activity.link,
+    description: activity.description ?? '',
+    proposedBy: proposer?.name ?? 'Unknown',
+    costEUR: activity.cost_eur ?? 0,
+    link: activity.link ?? null,
     votes: {},
-    comments: []
+    comments: [],
   });
 });
 
-router.post('/activities/:id/vote', requireAuth, (req, res) => {
+router.post('/activities/:id/vote', requireAuth, async (req, res) => {
   const { vote } = req.body;
   if (!['yes', 'no'].includes(vote)) {
     return res.status(400).json({ error: 'Vote must be yes or no' });
   }
-
-  db.prepare(
-    'INSERT INTO votes (activity_id, user_id, vote) VALUES (?, ?, ?) ON CONFLICT(activity_id, user_id) DO UPDATE SET vote = ?'
-  ).run(req.params.id, req.session.userId, vote, vote);
-
+  const supabase = (req as any).db;
+  const { error } = await supabase.from('votes').upsert(
+    {
+      activity_id: req.params.id,
+      user_id: req.session.userId,
+      vote,
+    },
+    { onConflict: 'activity_id,user_id' }
+  );
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
 
-router.post('/activities/:id/comment', requireAuth, (req, res) => {
+router.post('/activities/:id/comment', requireAuth, async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Text is required' });
-
-  db.prepare(
-    'INSERT INTO comments (activity_id, user_id, text) VALUES (?, ?, ?)'
-  ).run(req.params.id, req.session.userId, text);
-
+  const supabase = (req as any).db;
+  const { error } = await supabase.from('comments').insert({
+    activity_id: req.params.id,
+    user_id: req.session.userId,
+    text,
+  });
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
 
-router.delete('/activities/:id', requireAdmin, (req, res) => {
-  db.prepare('DELETE FROM activities WHERE id = ?').run(req.params.id);
+router.delete('/activities/:id', requireAdmin, async (req, res) => {
+  const supabase = (req as any).db;
+  const { error } = await supabase.from('activities').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
 

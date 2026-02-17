@@ -1,60 +1,20 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import { ADMIN_NAME } from './data/config.js';
+import dotenv from 'dotenv';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const dbPath = path.join(import.meta.dirname, '..', 'data.db');
-const db = new Database(dbPath);
+dotenv.config(); // .env
+dotenv.config({ path: '.env.local' }); // overrides with .env.local
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+if (!supabaseUrl || !supabaseServiceKey) {
+  const missing = [!supabaseUrl && 'SUPABASE_URL', !supabaseServiceKey && 'SUPABASE_SERVICE_ROLE_KEY'].filter(Boolean).join(', ');
+  throw new Error(`Missing env: ${missing}. Add to .env.local (see .env.example)`);
+}
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL,
-    is_admin INTEGER DEFAULT 0,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { persistSession: false },
+});
 
-  CREATE TABLE IF NOT EXISTS itinerary_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    trip_id INTEGER NOT NULL DEFAULT 1,
-    day INTEGER NOT NULL,
-    time TEXT NOT NULL,
-    activity TEXT NOT NULL,
-    location TEXT NOT NULL,
-    cost_eur REAL DEFAULT 0,
-    notes TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS activities (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    trip_id INTEGER NOT NULL DEFAULT 1,
-    title TEXT NOT NULL,
-    description TEXT,
-    proposed_by INTEGER REFERENCES users(id),
-    cost_eur REAL DEFAULT 0,
-    link TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS votes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    activity_id INTEGER REFERENCES activities(id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES users(id),
-    vote TEXT CHECK(vote IN ('yes', 'no')),
-    UNIQUE(activity_id, user_id)
-  );
-
-  CREATE TABLE IF NOT EXISTS comments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    activity_id INTEGER REFERENCES activities(id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES users(id),
-    text TEXT NOT NULL,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
-`);
-
-// Ensure the admin name always has admin privileges if they've already joined
-db.prepare('UPDATE users SET is_admin = 1 WHERE LOWER(name) = LOWER(?)').run(ADMIN_NAME);
-
-export default db;
+export function getDb() {
+  return supabase;
+}

@@ -12,3 +12,4 @@ services:
         value: production
       - key: SESSION_SECRET
         generateValue: true
+      # Add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Render dashboard

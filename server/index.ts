@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
-import db from './db.js';
+import { getDb } from './db.js';
 import authRoutes from './routes/auth.js';
 import tripRoutes from './routes/trips.js';
 import itineraryRoutes from './routes/itinerary.js';
@@ -19,7 +19,6 @@ const isProduction = existsSync(distPath);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Only apply CORS in dev (when frontend is on a separate port via Vite)
 if (!isProduction) {
   const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
   app.use(cors({ origin: corsOrigin, credentials: true }));
@@ -33,17 +32,15 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000
   }
 }));
 
-// Attach db to request for middleware access
 app.use((req, _res, next) => {
-  (req as any).db = db;
+  (req as any).db = getDb();
   next();
 });
 
-// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api', itineraryRoutes);
@@ -51,10 +48,8 @@ app.use('/api', activityRoutes);
 app.use('/api', travelInfoRoutes);
 app.use('/api/members', memberRoutes);
 
-// Serve built frontend when dist/ exists (production / full-stack mode)
 if (isProduction) {
   app.use(express.static(distPath));
-  // SPA fallback — serve index.html for any non-API route
   app.get('/{*splat}', (_req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
