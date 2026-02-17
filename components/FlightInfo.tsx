@@ -43,79 +43,83 @@ const FlightInfoCard: React.FC<FlightInfoProps> = ({ flights, tripId, isAdmin, o
   };
 
   return (
-    <div className="card p-5">
-      <div className="flex justify-between items-center mb-4">
+    <div className="card p-4 sm:p-5">
+      <div className="flex justify-between items-center mb-3">
         <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
           <Plane size={16} className="text-primary" />
           Flights
         </h2>
         {isAdmin && !showForm && (
-          <button onClick={() => setShowForm(true)} className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
+          <button onClick={() => setShowForm(true)} className="text-xs text-primary font-medium hover:underline flex items-center gap-1 min-h-[44px]">
             <Plus size={14} /> Add
           </button>
         )}
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-2.5">
+        <form onSubmit={handleSubmit} className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2.5">
           <div className="grid grid-cols-2 gap-2.5">
-            <input value={form.airline} onChange={e => setForm({ ...form, airline: e.target.value })} placeholder="Airline *" required className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
-            <input value={form.flightNumber} onChange={e => setForm({ ...form, flightNumber: e.target.value })} placeholder="Flight #" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+            <input value={form.airline} onChange={e => setForm({ ...form, airline: e.target.value })} placeholder="Airline *" required className="w-full px-3 py-3 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+            <input value={form.flightNumber} onChange={e => setForm({ ...form, flightNumber: e.target.value })} placeholder="Flight #" className="w-full px-3 py-3 rounded-xl border border-slate-200 text-sm bg-white" />
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            <input value={form.departureAirport} onChange={e => setForm({ ...form, departureAirport: e.target.value })} placeholder="From (airport)" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
-            <input value={form.arrivalAirport} onChange={e => setForm({ ...form, arrivalAirport: e.target.value })} placeholder="To (airport)" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+            <input value={form.departureAirport} onChange={e => setForm({ ...form, departureAirport: e.target.value })} placeholder="From (e.g. LGW)" className="w-full px-3 py-3 rounded-xl border border-slate-200 text-sm bg-white" />
+            <input value={form.arrivalAirport} onChange={e => setForm({ ...form, arrivalAirport: e.target.value })} placeholder="To (e.g. ACE)" className="w-full px-3 py-3 rounded-xl border border-slate-200 text-sm bg-white" />
           </div>
           <div className="grid grid-cols-2 gap-2.5">
             <div>
               <label className="text-[10px] text-slate-400 uppercase tracking-wider">Departure</label>
-              <input type="datetime-local" value={form.departureTime} onChange={e => setForm({ ...form, departureTime: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+              <input type="datetime-local" value={form.departureTime} onChange={e => setForm({ ...form, departureTime: e.target.value })} className="w-full px-3 py-3 rounded-xl border border-slate-200 text-sm bg-white" />
             </div>
             <div>
               <label className="text-[10px] text-slate-400 uppercase tracking-wider">Arrival</label>
-              <input type="datetime-local" value={form.arrivalTime} onChange={e => setForm({ ...form, arrivalTime: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+              <input type="datetime-local" value={form.arrivalTime} onChange={e => setForm({ ...form, arrivalTime: e.target.value })} className="w-full px-3 py-3 rounded-xl border border-slate-200 text-sm bg-white" />
             </div>
           </div>
-          <input value={form.bookingReference} onChange={e => setForm({ ...form, bookingReference: e.target.value })} placeholder="Booking reference" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
-          <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Notes" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" rows={2} />
-          <div className="flex gap-2">
-            <button type="submit" className="bg-primary text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1"><Check size={12} /> {editingId ? 'Update' : 'Add'}</button>
-            <button type="button" onClick={resetForm} className="text-slate-400 px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100"><X size={12} /></button>
+          <input value={form.bookingReference} onChange={e => setForm({ ...form, bookingReference: e.target.value })} placeholder="Booking reference" className="w-full px-3 py-3 rounded-xl border border-slate-200 text-sm bg-white" />
+          <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Notes" className="w-full px-3 py-3 rounded-xl border border-slate-200 text-sm bg-white" rows={2} />
+          <div className="flex gap-2 pt-1">
+            <button type="submit" className="bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1 min-h-[44px]"><Check size={14} /> {editingId ? 'Update' : 'Add'}</button>
+            <button type="button" onClick={resetForm} className="text-slate-400 px-3 py-2.5 rounded-xl text-xs hover:bg-slate-100 min-h-[44px] flex items-center"><X size={14} /></button>
           </div>
         </form>
       )}
 
       {flights.length === 0 && !showForm && (
-        <p className="text-slate-400 text-xs">No flight info yet.</p>
+        <p className="text-slate-400 text-xs py-2">No flight info yet.</p>
       )}
 
       <div className="space-y-2.5">
         {flights.map(flight => (
-          <div key={flight.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+          <div key={flight.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex justify-between items-start">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-800">{flight.airline}{flight.flight_number && ` ${flight.flight_number}`}</p>
                 {(flight.departure_airport || flight.arrival_airport) && (
-                  <p className="text-xs text-slate-500 mt-0.5">{flight.departure_airport} → {flight.arrival_airport}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                    <span className="font-semibold text-slate-700">{flight.departure_airport}</span>
+                    <span className="text-slate-300">→</span>
+                    <span className="font-semibold text-slate-700">{flight.arrival_airport}</span>
+                  </p>
                 )}
               </div>
               {isAdmin && (
-                <div className="flex gap-0.5">
-                  <button onClick={() => handleEdit(flight)} className="p-1 text-slate-400 hover:text-primary"><Edit2 size={12} /></button>
-                  <button onClick={() => handleDelete(flight.id)} className="p-1 text-slate-400 hover:text-red-500"><X size={12} /></button>
+                <div className="flex gap-1 shrink-0 ml-2">
+                  <button onClick={() => handleEdit(flight)} className="p-2 text-slate-400 hover:text-primary min-w-[36px] min-h-[36px] flex items-center justify-center"><Edit2 size={14} /></button>
+                  <button onClick={() => handleDelete(flight.id)} className="p-2 text-slate-400 hover:text-red-500 min-w-[36px] min-h-[36px] flex items-center justify-center"><X size={14} /></button>
                 </div>
               )}
             </div>
             {(flight.departure_time || flight.arrival_time) && (
-              <div className="mt-2 flex gap-3 text-[11px] text-slate-500">
-                {flight.departure_time && <span>Dep: {new Date(flight.departure_time).toLocaleString()}</span>}
-                {flight.arrival_time && <span>Arr: {new Date(flight.arrival_time).toLocaleString()}</span>}
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                {flight.departure_time && <span>Dep: {new Date(flight.departure_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} {new Date(flight.departure_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>}
+                {flight.arrival_time && <span>Arr: {new Date(flight.arrival_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} {new Date(flight.arrival_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>}
               </div>
             )}
             {flight.booking_reference && (
-              <p className="mt-1 text-[11px] text-slate-500">Ref: <span className="font-mono font-medium text-slate-700">{flight.booking_reference}</span></p>
+              <p className="mt-1.5 text-xs text-slate-500">Ref: <span className="font-mono font-medium text-slate-700">{flight.booking_reference}</span></p>
             )}
-            {flight.notes && <p className="mt-1 text-xs text-slate-600">{flight.notes}</p>}
+            {flight.notes && <p className="mt-1.5 text-xs text-slate-600 font-medium">{flight.notes}</p>}
           </div>
         ))}
       </div>

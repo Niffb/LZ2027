@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
-import { getDb } from './db.js';
+import { getDb, verifySchema } from './db.js';
 import authRoutes from './routes/auth.js';
 import tripRoutes from './routes/trips.js';
 import itineraryRoutes from './routes/itinerary.js';
@@ -36,6 +36,8 @@ app.use(session({
   }
 }));
 
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
 app.use((req, _res, next) => {
   (req as any).db = getDb();
   next();
@@ -55,6 +57,7 @@ if (isProduction) {
   });
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}${isProduction ? ' (serving frontend from dist/)' : ''}`);
+  await verifySchema();
 });

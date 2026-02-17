@@ -1,10 +1,11 @@
 -- Run this in Supabase SQL Editor to create the schema
 -- Dashboard → SQL Editor → New Query → Paste & Run
 
--- Users (invite-code based, not Supabase Auth)
+-- Users (custom auth with name + password + group code)
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT UNIQUE NOT NULL,
+  password_hash TEXT,
   is_admin INTEGER DEFAULT 0 CHECK (is_admin IN (0, 1)),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

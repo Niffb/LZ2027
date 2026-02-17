@@ -38,81 +38,85 @@ const Budget: React.FC<BudgetProps> = ({ itinerary, pins, travelerCount, current
   ].filter(d => d.value > 0);
 
   return (
-    <div className={`card ${expanded ? 'p-6' : 'p-5'}`}>
-      <div className="flex items-center justify-between mb-5">
+    <div className={`card ${expanded ? 'p-4 sm:p-6' : 'p-4 sm:p-5'}`}>
+      <div className="flex items-center justify-between mb-4 sm:mb-5">
         <h2 className="text-sm font-semibold text-slate-900">Cost Breakdown</h2>
-        <span className="text-[10px] font-medium text-slate-400 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded">1 EUR ≈ 0.85 GBP</span>
+        <span className="text-[10px] font-medium text-slate-400 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">1 EUR ~ 0.85 GBP</span>
       </div>
 
-      <div className={`grid grid-cols-1 ${expanded ? 'lg:grid-cols-2' : ''} gap-6`}>
+      <div className={`grid grid-cols-1 ${expanded ? 'lg:grid-cols-2' : ''} gap-5 sm:gap-6`}>
         <div>
           <p className="text-xs font-medium text-slate-500 mb-3">Your estimated cost</p>
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-lg">
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-indigo-50 border border-indigo-100 p-3.5 rounded-xl">
               <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider mb-1">EUR</p>
               <p className="text-2xl font-extrabold text-indigo-900">€{myTotalEUR.toFixed(0)}</p>
             </div>
-            <div className="bg-slate-50 border border-slate-100 p-3 rounded-lg">
+            <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">GBP</p>
               <p className="text-2xl font-extrabold text-slate-800">£{myTotalGBP.toFixed(0)}</p>
             </div>
           </div>
 
-          <div className="space-y-1.5 mb-5">
-            <div className="flex justify-between items-center text-xs p-2 bg-slate-50 rounded-md border border-slate-100">
+          <div className="space-y-1.5 mb-4">
+            <div className="flex justify-between items-center text-xs p-3 bg-slate-50 rounded-xl border border-slate-100">
               <span className="text-slate-500">Itinerary (shared ÷ {travelerCount})</span>
               <span className="font-semibold text-slate-800">€{itineraryPerPersonEUR.toFixed(0)}</span>
             </div>
             {myActivities.map(a => (
-              <div key={a.id} className="flex justify-between items-center text-xs p-2 bg-slate-50 rounded-md border border-slate-100">
-                <span className="text-slate-500">{a.title}</span>
-                <span className="font-semibold text-slate-800">€{a.costEUR}</span>
+              <div key={a.id} className="flex justify-between items-center text-xs p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span className="text-slate-500 truncate mr-3">{a.title}</span>
+                <span className="font-semibold text-slate-800 shrink-0">€{a.costEUR}</span>
               </div>
             ))}
             {myActivities.length === 0 && (
-              <p className="text-[11px] text-slate-400 italic">Vote "yes" on suggestions to see costs here.</p>
+              <p className="text-xs text-slate-400 italic py-1">Vote "yes" on suggestions to see costs here.</p>
             )}
           </div>
 
           {expanded && perUserBreakdown.length > 0 && (
             <div>
               <p className="text-xs font-medium text-slate-500 mb-2">Everyone's costs</p>
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="text-left px-3 py-2 font-semibold text-slate-500">Person</th>
-                      <th className="text-right px-3 py-2 font-semibold text-slate-500">Itinerary</th>
-                      <th className="text-right px-3 py-2 font-semibold text-slate-500">Activities</th>
-                      <th className="text-right px-3 py-2 font-semibold text-slate-500">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {perUserBreakdown.map(u => (
-                      <tr key={u.name} className={`border-t border-slate-100 ${u.name === currentUserName ? 'bg-indigo-50/40' : ''}`}>
-                        <td className="px-3 py-2 font-medium text-slate-800">{u.name}{u.name === currentUserName ? ' (you)' : ''}</td>
-                        <td className="px-3 py-2 text-right text-slate-500">€{u.itineraryCost.toFixed(0)}</td>
-                        <td className="px-3 py-2 text-right text-slate-500">€{u.activitiesCost.toFixed(0)}</td>
-                        <td className="px-3 py-2 text-right font-semibold text-slate-800">€{u.total.toFixed(0)}</td>
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+                  <table className="w-full text-xs min-w-[340px]">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="text-left px-3 py-2.5 font-semibold text-slate-500">Person</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-slate-500">Itin.</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-slate-500">Acts.</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-slate-500">Total</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {perUserBreakdown.map(u => (
+                        <tr key={u.name} className={`border-t border-slate-100 ${u.name === currentUserName ? 'bg-indigo-50/40' : ''}`}>
+                          <td className="px-3 py-2.5 font-medium text-slate-800">
+                            <span className="truncate block max-w-[100px]">{u.name}{u.name === currentUserName ? ' (you)' : ''}</span>
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-slate-500">€{u.itineraryCost.toFixed(0)}</td>
+                          <td className="px-3 py-2.5 text-right text-slate-500">€{u.activitiesCost.toFixed(0)}</td>
+                          <td className="px-3 py-2.5 text-right font-semibold text-slate-800">€{u.total.toFixed(0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        <div className="h-56 flex items-center justify-center">
+        <div className="h-48 sm:h-56 flex items-center justify-center">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={chartData} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="value">
+                <Pie data={chartData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={4} dataKey="value">
                   {chartData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [`€${value}`, 'Cost']} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', fontSize: '12px' }} />
+                <Tooltip formatter={(value: number) => [`€${value}`, 'Cost']} contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (

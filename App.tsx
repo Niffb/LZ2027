@@ -9,10 +9,10 @@ import Budget from './components/Budget';
 import HotelInfoCard from './components/HotelInfo';
 import FlightInfoCard from './components/FlightInfo';
 import Members from './components/Members';
-import { MapPin, Calendar, LayoutDashboard, LogOut, DollarSign } from 'lucide-react';
+import { MapPin, Calendar, LayoutDashboard, LogOut, DollarSign, Sun } from 'lucide-react';
 
 interface Member {
-  id: number;
+  id: string;
   name: string;
   isAdmin: boolean;
   joinedAt: string;
@@ -150,10 +150,18 @@ export default function App() {
     ? Math.max(0, Math.round((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
 
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <p className="text-sm text-slate-400">Loading...</p>
+      <div className="min-h-screen min-h-dvh flex items-center justify-center bg-slate-100">
+        <div className="text-center">
+          <Sun size={28} className="text-amber-400 mx-auto mb-3 animate-spin" style={{ animationDuration: '3s' }} />
+          <p className="text-sm text-slate-400">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -163,23 +171,24 @@ export default function App() {
   }
 
   const tabs = [
-    { id: 'dashboard' as const, label: 'Overview', icon: <LayoutDashboard size={16} /> },
-    { id: 'itinerary' as const, label: 'Itinerary', icon: <Calendar size={16} /> },
-    { id: 'pins' as const, label: 'Suggestions', icon: <MapPin size={16} /> },
-    { id: 'budget' as const, label: 'Budget', icon: <DollarSign size={16} /> },
+    { id: 'dashboard' as const, label: 'Overview', icon: <LayoutDashboard size={18} /> },
+    { id: 'itinerary' as const, label: 'Itinerary', icon: <Calendar size={18} /> },
+    { id: 'pins' as const, label: 'Suggestions', icon: <MapPin size={18} /> },
+    { id: 'budget' as const, label: 'Budget', icon: <DollarSign size={18} /> },
   ];
 
   return (
-    <div className="min-h-screen min-h-dvh bg-slate-100">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-slate-200 pt-[env(safe-area-inset-top)]">
+    <div className="min-h-screen min-h-dvh bg-slate-100 pb-20 md:pb-0">
+      {/* Top nav - desktop only */}
+      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 pt-[env(safe-area-inset-top)]">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+          <span className="text-sm font-bold text-slate-800 md:hidden">Lanzarote 2027</span>
           <div className="hidden md:flex items-center gap-1">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${activeTab === tab.id ? 'bg-primary-light text-primary' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 min-h-[44px] ${activeTab === tab.id ? 'bg-primary-light text-primary' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
               >
                 {tab.icon} {tab.label}
               </button>
@@ -187,54 +196,41 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
+            <div className="text-right">
               <p className="text-xs font-medium text-slate-800">{user.name}</p>
               <p className="text-[10px] text-slate-400">{user.isAdmin ? 'Admin' : 'Member'}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+              className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               title="Sign out"
             >
-              <LogOut size={16} />
+              <LogOut size={18} />
             </button>
           </div>
-        </div>
-
-        {/* Mobile tabs */}
-        <div className="md:hidden flex border-t border-slate-100">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 min-h-[44px] flex justify-center items-center ${activeTab === tab.id ? 'text-primary border-b-2 border-primary font-medium' : 'text-slate-400'}`}
-              aria-label={tab.label}
-            >
-              {tab.icon}
-            </button>
-          ))}
         </div>
       </nav>
 
       {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 py-4 sm:py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {activeTab === 'dashboard' && trip && (
-          <div className="space-y-4 sm:space-y-5">
+          <div className="space-y-3 sm:space-y-5">
             {/* Hero + Countdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-5">
-              <div className="lg:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-xl p-4 sm:p-6 text-white relative overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-5">
+              <div className="lg:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-2xl p-5 sm:p-6 text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4"></div>
-                <h1 className="text-xl sm:text-2xl font-bold mb-1">{trip.destination}</h1>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4"></div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold mb-1 tracking-tight">{trip.destination}</h1>
                 <p className="text-indigo-200 text-sm flex items-center gap-1.5 mb-5">
                   <Calendar size={14} />
-                  {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}
+                  {formatDate(trip.startDate)} — {formatDate(trip.endDate)}
                 </p>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <div className="bg-white/15 backdrop-blur-sm rounded-lg px-3.5 py-2 min-w-[70px]">
+                <div className="flex flex-wrap gap-2.5">
+                  <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-2.5">
                     <span className="block text-xl font-bold">{trip.travelers}</span>
-                    <span className="text-[10px] text-indigo-200 uppercase tracking-wider">Travelers</span>
+                    <span className="text-[10px] text-indigo-200 uppercase tracking-wider">Travellers</span>
                   </div>
-                  <div className="bg-white/15 backdrop-blur-sm rounded-lg px-3.5 py-2">
+                  <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-2.5">
                     <span className="block text-xl font-bold">{nightsCount}</span>
                     <span className="text-[10px] text-indigo-200 uppercase tracking-wider">Nights</span>
                   </div>
@@ -243,32 +239,32 @@ export default function App() {
               <Countdown targetDate={trip.startDate} />
             </div>
 
-            {/* Info cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {/* Info cards - stack on mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
               <HotelInfoCard hotels={hotels} tripId={trip.id} isAdmin={user.isAdmin} onRefresh={loadTripData} />
               <FlightInfoCard flights={flights} tripId={trip.id} isAdmin={user.isAdmin} onRefresh={loadTripData} />
               <Members members={members} />
             </div>
 
-            {/* Suggestions + Upcoming */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-              <div className="card p-5">
-                <div className="flex justify-between items-center mb-4">
+            {/* Suggestions + Upcoming - stack on mobile */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
+              <div className="card p-4 sm:p-5">
+                <div className="flex justify-between items-center mb-3">
                   <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                     <MapPin size={16} className="text-primary" />
                     Top Suggestions
                   </h2>
-                  <button onClick={() => setActiveTab('pins')} className="text-[11px] text-primary font-medium hover:underline">View all</button>
+                  <button onClick={() => setActiveTab('pins')} className="text-xs text-primary font-medium hover:underline min-h-[44px] flex items-center">View all</button>
                 </div>
-                <div className="space-y-2.5">
-                  {pins.length === 0 && <p className="text-slate-400 text-xs">No suggestions yet.</p>}
+                <div className="space-y-2">
+                  {pins.length === 0 && <p className="text-slate-400 text-xs py-2">No suggestions yet.</p>}
                   {pins.slice(0, 3).map(pin => (
-                    <div key={pin.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                      <div>
-                        <p className="text-sm font-medium text-slate-800">{pin.title}</p>
+                    <div key={pin.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <div className="min-w-0 flex-1 mr-3">
+                        <p className="text-sm font-medium text-slate-800 truncate">{pin.title}</p>
                         <p className="text-[11px] text-slate-500">By {pin.proposedBy}</p>
                       </div>
-                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg shrink-0">
                         {Object.values(pin.votes).filter(v => v === 'yes').length} yes
                       </span>
                     </div>
@@ -276,25 +272,25 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="card p-5">
-                <div className="flex justify-between items-center mb-4">
+              <div className="card p-4 sm:p-5">
+                <div className="flex justify-between items-center mb-3">
                   <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                     <Calendar size={16} className="text-primary" />
                     Upcoming
                   </h2>
-                  <button onClick={() => setActiveTab('itinerary')} className="text-[11px] text-primary font-medium hover:underline">Full plan</button>
+                  <button onClick={() => setActiveTab('itinerary')} className="text-xs text-primary font-medium hover:underline min-h-[44px] flex items-center">Full plan</button>
                 </div>
-                <div className="space-y-2.5">
-                  {itinerary.length === 0 && <p className="text-slate-400 text-xs">No itinerary items yet.</p>}
+                <div className="space-y-2">
+                  {itinerary.length === 0 && <p className="text-slate-400 text-xs py-2">No itinerary items yet.</p>}
                   {itinerary.slice(0, 3).map(item => (
-                    <div key={item.id} className="flex gap-3 items-center">
-                      <div className="w-10 text-center bg-indigo-50 border border-indigo-100 rounded-lg py-1 shrink-0">
+                    <div key={item.id} className="flex gap-3 items-center p-2 rounded-xl">
+                      <div className="w-11 text-center bg-indigo-50 border border-indigo-100 rounded-xl py-1.5 shrink-0">
                         <span className="block text-[9px] font-bold text-indigo-400 uppercase">Day</span>
                         <span className="block text-sm font-bold text-indigo-700">{item.day}</span>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-800">{item.activity}</p>
-                        <p className="text-[11px] text-slate-500">{item.time} · {item.location}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-800 truncate">{item.activity}</p>
+                        <p className="text-[11px] text-slate-500 truncate">{item.time} · {item.location}</p>
                       </div>
                     </div>
                   ))}
@@ -318,6 +314,23 @@ export default function App() {
           <Budget itinerary={itinerary} pins={pins} travelerCount={trip.travelers} currentUserName={user.name} expanded={true} />
         )}
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex flex-col items-center justify-center py-2 min-h-[56px] transition-colors ${activeTab === tab.id ? 'text-primary' : 'text-slate-400'}`}
+              aria-label={tab.label}
+            >
+              {tab.icon}
+              <span className={`text-[10px] mt-0.5 ${activeTab === tab.id ? 'font-semibold' : 'font-medium'}`}>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

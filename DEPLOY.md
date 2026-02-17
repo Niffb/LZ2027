@@ -8,9 +8,11 @@ This app uses a **split deployment**: frontend on Vercel, backend on Render. Bot
 
 1. Go to [supabase.com](https://supabase.com) and create a free project.
 2. In **Project Settings** → **API**, copy:
-   - **Project URL** → `SUPABASE_URL`
-   - **service_role key** (not anon) → `SUPABASE_SERVICE_ROLE_KEY`
-3. In **SQL Editor**, run the schema: paste the contents of `supabase/schema.sql` and execute.
+   - **Project URL** → `SUPABASE_URL` and `VITE_SUPABASE_URL`
+   - **service_role key** (Secret) → `SUPABASE_SERVICE_ROLE_KEY` (backend only)
+   - **Publishable key** → `VITE_SUPABASE_ANON_KEY` (frontend auth)
+3. In **SQL Editor**, run `supabase/schema.sql`, then `supabase/migration-auth.sql`.
+4. Run `supabase/migration-password.sql` to add the password_hash column. Auth is custom (name + password), not Supabase Auth.
 
 ---
 
@@ -57,7 +59,7 @@ The `vercel.json` rewrites proxy `/api/*` requests to your Render backend, so yo
 
 ## Local development
 
-1. Copy `.env.example` to `.env.local` and set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+1. Copy `.env.example` to `.env.local` and set all Supabase vars (URL, service role key, and VITE_ URL + anon key for frontend).
 2. Run:
    - Frontend: `npm run dev`
    - Backend: `npm run server`

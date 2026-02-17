@@ -1,1 +1,24 @@
-/* Entry point for Vite - styles are primarily in index.html */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Smooth scrolling on iOS */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Better select/input styling on mobile */
+  select, input[type="date"], input[type="time"], input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Prevent zoom on input focus in iOS (font size >= 16px handles this,
+     but this is a safety net) */
+  @media screen and (max-width: 767px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+}

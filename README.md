@@ -10,14 +10,15 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Ytw1shKHLjoNWOcFLdVotw
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+**Prerequisites:** Node.js
 
+1. Install dependencies: `npm install`
+2. Copy [.env.example](.env.example) to `.env.local` and set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+3. Run Supabase migration: `supabase/migration-password.sql` (adds password_hash to users)
+4. **Run both frontend and backend:** `npm run dev:all`  
+   (Or separately: `npm run server` in one terminal, `npm run dev` in another)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+**Group/invite code for sign up:** `lz2027` (edit in `server/data/config.ts`)
 
 ## Deploy to Vercel (Free Tier)
 

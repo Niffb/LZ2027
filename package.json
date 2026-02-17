@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "server": "tsx server/index.ts",
-    "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
+    "server:watch": "nodemon --watch server --ext ts --exec \"tsx server/index.ts\"",
+    "dev:all": "concurrently -n s,v \"npm run server:watch\" \"npm run dev\"",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -29,7 +30,11 @@
     "@types/express-session": "^1.18.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.24",
     "concurrently": "^9.2.1",
+    "nodemon": "^3.1.11",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"

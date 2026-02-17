@@ -25,18 +25,20 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
   }, [targetDate]);
 
   return (
-    <div className="h-full card p-5 flex flex-col items-center justify-center">
-      <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">Countdown</p>
-      <div className="text-5xl font-extrabold text-slate-900 tracking-tight">
-        {timeLeft.days}
+    <div className="card p-5 flex flex-row lg:flex-col items-center justify-center gap-4 lg:gap-0">
+      <div className="text-center">
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 lg:mb-3">Countdown</p>
+        <div className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
+          {timeLeft.days}
+        </div>
+        <p className="text-xs text-slate-500 mt-0.5 lg:mt-1">days to go</p>
       </div>
-      <p className="text-sm text-slate-500 mt-1 mb-4">days to go</p>
-      <div className="flex gap-3">
-        <div className="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg text-center">
+      <div className="flex gap-2 lg:mt-4">
+        <div className="bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl text-center min-w-[52px]">
           <span className="block text-lg font-bold text-slate-800">{timeLeft.hours}</span>
           <span className="text-[10px] text-slate-400 uppercase">hrs</span>
         </div>
-        <div className="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg text-center">
+        <div className="bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl text-center min-w-[52px]">
           <span className="block text-lg font-bold text-slate-800">{timeLeft.minutes}</span>
           <span className="text-[10px] text-slate-400 uppercase">min</span>
         </div>

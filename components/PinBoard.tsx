@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, User } from '../types';
 import { API_BASE } from '../lib/api';
-import { ThumbsUp, ThumbsDown, Plus, CalendarPlus } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Plus, CalendarPlus, X } from 'lucide-react';
 
 interface PinBoardProps {
   pins: Activity[];
@@ -48,33 +48,41 @@ const PinBoard: React.FC<PinBoardProps> = ({ pins, currentUser, onAddPin, onUpda
   };
 
   return (
-    <div className="space-y-5">
-      <div className="card p-5 flex justify-between items-center">
+    <div className="space-y-3 sm:space-y-5">
+      <div className="card p-4 sm:p-5 flex justify-between items-center">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Suggestions</h2>
           <p className="text-xs text-slate-500 mt-0.5">Vote on activities or suggest new ones.</p>
         </div>
         {currentUser.isAdmin && (
-          <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors">
+          <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-semibold hover:bg-primary-dark active:scale-[0.98] transition-all min-h-[44px] shadow-sm shadow-indigo-200">
             <Plus size={14}/> New idea
           </button>
         )}
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-5 w-full max-w-md shadow-xl border border-slate-200">
-            <h3 className="text-sm font-semibold text-slate-900 mb-4">New Suggestion</h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl p-5 w-full sm:max-w-md shadow-xl border border-slate-200 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-semibold text-slate-900">New Suggestion</h3>
+              <button onClick={() => setShowAddModal(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <X size={20} />
+              </button>
+            </div>
             <form onSubmit={submitNewPin} className="space-y-3">
-              <input className="w-full border border-slate-200 px-3 py-2 rounded-lg text-sm bg-slate-50" placeholder="Title" value={newPinTitle} onChange={e => setNewPinTitle(e.target.value)} required />
-              <textarea className="w-full border border-slate-200 px-3 py-2 rounded-lg text-sm bg-slate-50" placeholder="Description" value={newPinDesc} onChange={e => setNewPinDesc(e.target.value)} rows={2} />
+              <input className="w-full border border-slate-200 px-4 py-3 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="Title" value={newPinTitle} onChange={e => setNewPinTitle(e.target.value)} required />
+              <textarea className="w-full border border-slate-200 px-4 py-3 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="Description" value={newPinDesc} onChange={e => setNewPinDesc(e.target.value)} rows={3} />
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-500">€</span>
-                <input type="number" className="w-full border border-slate-200 px-3 py-2 rounded-lg text-sm bg-slate-50" placeholder="Cost per person" value={newPinCost} onChange={e => setNewPinCost(Number(e.target.value))} />
+                <span className="text-sm text-slate-500 pl-1">Cost pp</span>
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">€</span>
+                  <input type="number" className="w-full border border-slate-200 pl-7 pr-4 py-3 rounded-xl text-sm bg-slate-50" placeholder="0" value={newPinCost} onChange={e => setNewPinCost(Number(e.target.value))} />
+                </div>
               </div>
-              <div className="flex gap-2 justify-end pt-1">
-                <button type="button" onClick={() => setShowAddModal(false)} className="px-3 py-1.5 text-slate-500 text-xs hover:bg-slate-50 rounded-lg">Cancel</button>
-                <button type="submit" className="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg">Post</button>
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-3 text-slate-500 text-sm font-medium hover:bg-slate-50 rounded-xl min-h-[48px]">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-3 bg-primary text-white text-sm font-semibold rounded-xl min-h-[48px] shadow-sm shadow-indigo-200 active:scale-[0.98] transition-all">Post</button>
               </div>
             </form>
           </div>
@@ -82,10 +90,10 @@ const PinBoard: React.FC<PinBoardProps> = ({ pins, currentUser, onAddPin, onUpda
       )}
 
       {pins.length === 0 && (
-        <p className="text-slate-400 text-xs text-center py-8">No suggestions yet.</p>
+        <p className="text-slate-400 text-sm text-center py-12">No suggestions yet.</p>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {pins.map(pin => {
           const yesVotes = Object.values(pin.votes).filter(v => v === 'yes').length;
           const noVotes = Object.values(pin.votes).filter(v => v === 'no').length;
@@ -103,34 +111,34 @@ const PinBoard: React.FC<PinBoardProps> = ({ pins, currentUser, onAddPin, onUpda
               <div className="border-t border-slate-100 pt-3 mt-auto space-y-3">
                 <div className="flex justify-between items-center">
                   <div className="flex gap-1.5">
-                    <button onClick={() => handleVote(pin, 'yes')} className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${myVote === 'yes' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-50 text-slate-500 hover:bg-emerald-50'}`}>
-                      <ThumbsUp size={12} /> {yesVotes}
+                    <button onClick={() => handleVote(pin, 'yes')} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all min-h-[40px] ${myVote === 'yes' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-50 text-slate-500 hover:bg-emerald-50 active:bg-emerald-100'}`}>
+                      <ThumbsUp size={14} /> {yesVotes}
                     </button>
-                    <button onClick={() => handleVote(pin, 'no')} className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${myVote === 'no' ? 'bg-red-100 text-red-700' : 'bg-slate-50 text-slate-500 hover:bg-red-50'}`}>
-                      <ThumbsDown size={12} /> {noVotes}
+                    <button onClick={() => handleVote(pin, 'no')} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all min-h-[40px] ${myVote === 'no' ? 'bg-red-100 text-red-700' : 'bg-slate-50 text-slate-500 hover:bg-red-50 active:bg-red-100'}`}>
+                      <ThumbsDown size={14} /> {noVotes}
                     </button>
                   </div>
                   {currentUser.isAdmin && (
-                    <button onClick={() => onAddToItinerary(pin)} className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors" title="Add to itinerary">
-                      <CalendarPlus size={12} /> Plan
+                    <button onClick={() => onAddToItinerary(pin)} className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-[11px] font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200 transition-all min-h-[40px]" title="Add to itinerary">
+                      <CalendarPlus size={14} /> Plan
                     </button>
                   )}
                 </div>
 
-                <div className="bg-slate-50 rounded-lg p-2.5">
-                  <div className="max-h-20 overflow-y-auto space-y-1.5 mb-2">
+                <div className="bg-slate-50 rounded-xl p-3">
+                  <div className="max-h-24 overflow-y-auto space-y-2 mb-2">
                     {pin.comments.map((c, idx) => (
-                      <div key={idx} className="text-[11px]">
+                      <div key={idx} className="text-xs">
                         <span className="font-semibold text-slate-700">{c.user}: </span>
                         <span className="text-slate-500">{c.text}</span>
                       </div>
                     ))}
-                    {pin.comments.length === 0 && <p className="text-[11px] text-slate-400 italic">No comments yet.</p>}
+                    {pin.comments.length === 0 && <p className="text-xs text-slate-400 italic">No comments yet.</p>}
                   </div>
                   <input
                     type="text"
                     placeholder="Add a comment..."
-                    className="w-full text-[11px] px-2 py-1.5 bg-white border border-slate-200 rounded-md focus:outline-none focus:border-primary"
+                    className="w-full text-xs px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[40px]"
                     onKeyDown={(e) => { if(e.key === 'Enter') { handleComment(pin, e.currentTarget.value); e.currentTarget.value = ''; } }}
                   />
                 </div>
