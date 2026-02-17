@@ -43,31 +43,6 @@ const TRIP = {
   travelers: 12,
 };
 
-const HOTELS = [
-  {
-    id: 1, trip_id: TRIP_ID,
-    name: 'Dreams Playa Dorada Lanzarote',
-    address: 'Playa Dorada, Playa Blanca, Lanzarote',
-    check_in: '2027-08-09', check_out: '2027-08-20',
-    confirmation_number: '', notes: '',
-  },
-];
-
-const FLIGHTS = [
-  {
-    id: 1, trip_id: TRIP_ID, airline: 'TBC', flight_number: '',
-    departure_airport: 'LGW', arrival_airport: 'ACE',
-    departure_time: '2027-08-09T06:00', arrival_time: '2027-08-09T10:00',
-    booking_reference: '', notes: 'Outbound',
-  },
-  {
-    id: 2, trip_id: TRIP_ID, airline: 'TBC', flight_number: '',
-    departure_airport: 'ACE', arrival_airport: 'LGW',
-    departure_time: '2027-08-20T11:00', arrival_time: '2027-08-20T15:00',
-    booking_reference: '', notes: 'Return',
-  },
-];
-
 const nameMatch = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 const JWT_SECRET = process.env.SESSION_SECRET || 'holiday-dashboard-family-secret';
@@ -196,9 +171,105 @@ app.get('/api/auth/me', async (req: any, res) => {
 app.get('/api/trips', requireAuth, (_req, res) => res.json([TRIP]));
 app.get('/api/trips/:id', requireAuth, (_req, res) => res.json(TRIP));
 
-// ── Hotels & Flights (static config) ──────────────────────────────────────────
-app.get('/api/trips/:tripId/hotels', requireAuth, (_req, res) => res.json(HOTELS));
-app.get('/api/trips/:tripId/flights', requireAuth, (_req, res) => res.json(FLIGHTS));
+// ── Hotels (DB) ───────────────────────────────────────────────────────────────
+app.get('/api/trips/:tripId/hotels', requireAuth, async (req: any, res) => {
+  const tripId = parseInt(req.params.tripId, 10);
+  const { data, error } = await req.db.from('hotels').select('*').eq('trip_id', tripId).order('check_in');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json((data ?? []).map((h: any) => ({
+    id: h.id,
+    trip_id: h.trip_id,
+    name: h.name,
+    address: h.address ?? '',
+    check_in: h.check_in ?? '',
+    check_out: h.check_out ?? '',
+    confirmation_number: h.confirmation_number ?? '',
+    notes: h.notes ?? '',
+  })));
+});
+
+app.post('/api/trips/:tripId/hotels', requireAdmin, async (req: any, res) => {
+  const tripId = parseInt(req.params.tripId, 10);
+  const { name, address, checkIn, checkOut, confirmationNumber, notes } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Hotel name is required' });
+  const { data, error } = await req.db.from('hotels').insert({
+    trip_id: tripId, name: name.trim(), address: address?.trim() ?? null,
+    check_in: checkIn || null, check_out: checkOut || null,
+    confirmation_number: confirmationNumber?.trim() ?? null, notes: notes?.trim() ?? null,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id, trip_id: data.trip_id, name: data.name, address: data.address ?? '', check_in: data.check_in ?? '', check_out: data.check_out ?? '', confirmation_number: data.confirmation_number ?? '', notes: data.notes ?? '' });
+});
+
+app.put('/api/hotels/:id', requireAdmin, async (req: any, res) => {
+  const { name, address, checkIn, checkOut, confirmationNumber, notes } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Hotel name is required' });
+  const { data, error } = await req.db.from('hotels').update({
+    name: name.trim(), address: address?.trim() ?? null,
+    check_in: checkIn || null, check_out: checkOut || null,
+    confirmation_number: confirmationNumber?.trim() ?? null, notes: notes?.trim() ?? null,
+  }).eq('id', req.params.id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id, trip_id: data.trip_id, name: data.name, address: data.address ?? '', check_in: data.check_in ?? '', check_out: data.check_out ?? '', confirmation_number: data.confirmation_number ?? '', notes: data.notes ?? '' });
+});
+
+app.delete('/api/hotels/:id', requireAdmin, async (req: any, res) => {
+  const { error } = await req.db.from('hotels').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// ── Flights (DB) ──────────────────────────────────────────────────────────────
+app.get('/api/trips/:tripId/flights', requireAuth, async (req: any, res) => {
+  const tripId = parseInt(req.params.tripId, 10);
+  const { data, error } = await req.db.from('flights').select('*').eq('trip_id', tripId).order('departure_time');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json((data ?? []).map((f: any) => ({
+    id: f.id,
+    trip_id: f.trip_id,
+    airline: f.airline,
+    flight_number: f.flight_number ?? '',
+    departure_airport: f.departure_airport ?? '',
+    arrival_airport: f.arrival_airport ?? '',
+    departure_time: f.departure_time ? new Date(f.departure_time).toISOString().slice(0, 16) : '',
+    arrival_time: f.arrival_time ? new Date(f.arrival_time).toISOString().slice(0, 16) : '',
+    booking_reference: f.booking_reference ?? '',
+    notes: f.notes ?? '',
+  })));
+});
+
+app.post('/api/trips/:tripId/flights', requireAdmin, async (req: any, res) => {
+  const tripId = parseInt(req.params.tripId, 10);
+  const { airline, flightNumber, departureAirport, arrivalAirport, departureTime, arrivalTime, bookingReference, notes } = req.body;
+  if (!airline?.trim()) return res.status(400).json({ error: 'Airline is required' });
+  const { data, error } = await req.db.from('flights').insert({
+    trip_id: tripId, airline: airline.trim(), flight_number: flightNumber?.trim() ?? null,
+    departure_airport: departureAirport?.trim() ?? null, arrival_airport: arrivalAirport?.trim() ?? null,
+    departure_time: departureTime || null, arrival_time: arrivalTime || null,
+    booking_reference: bookingReference?.trim() ?? null, notes: notes?.trim() ?? null,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id, trip_id: data.trip_id, airline: data.airline, flight_number: data.flight_number ?? '', departure_airport: data.departure_airport ?? '', arrival_airport: data.arrival_airport ?? '', departure_time: data.departure_time ? new Date(data.departure_time).toISOString().slice(0, 16) : '', arrival_time: data.arrival_time ? new Date(data.arrival_time).toISOString().slice(0, 16) : '', booking_reference: data.booking_reference ?? '', notes: data.notes ?? '' });
+});
+
+app.put('/api/flights/:id', requireAdmin, async (req: any, res) => {
+  const { airline, flightNumber, departureAirport, arrivalAirport, departureTime, arrivalTime, bookingReference, notes } = req.body;
+  if (!airline?.trim()) return res.status(400).json({ error: 'Airline is required' });
+  const { data, error } = await req.db.from('flights').update({
+    airline: airline.trim(), flight_number: flightNumber?.trim() ?? null,
+    departure_airport: departureAirport?.trim() ?? null, arrival_airport: arrivalAirport?.trim() ?? null,
+    departure_time: departureTime || null, arrival_time: arrivalTime || null,
+    booking_reference: bookingReference?.trim() ?? null, notes: notes?.trim() ?? null,
+  }).eq('id', req.params.id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id, trip_id: data.trip_id, airline: data.airline, flight_number: data.flight_number ?? '', departure_airport: data.departure_airport ?? '', arrival_airport: data.arrival_airport ?? '', departure_time: data.departure_time ? new Date(data.departure_time).toISOString().slice(0, 16) : '', arrival_time: data.arrival_time ? new Date(data.arrival_time).toISOString().slice(0, 16) : '', booking_reference: data.booking_reference ?? '', notes: data.notes ?? '' });
+});
+
+app.delete('/api/flights/:id', requireAdmin, async (req: any, res) => {
+  const { error } = await req.db.from('flights').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
 
 // ── Members ───────────────────────────────────────────────────────────────────
 app.get('/api/members', requireAuth, async (req: any, res) => {

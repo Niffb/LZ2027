@@ -10,9 +10,10 @@ This app runs entirely on Vercel: static frontend + Express API as serverless fu
 2. In **Project Settings** → **API**, copy:
    - **Project URL** → `SUPABASE_URL`
    - **service_role key** (Secret) → `SUPABASE_SERVICE_ROLE_KEY`
-3. In **SQL Editor**, run:
+3. In **SQL Editor**, run in order:
    - `supabase/schema.sql`
    - `supabase/migration-password.sql` (adds password_hash column)
+   - `supabase/migration-hotels-flights.sql` (hotels + flights tables, editable accommodation/flight cards)
    - Optional: `supabase/migration-clear-users.sql` (removes all users for fresh start)
 
 ---

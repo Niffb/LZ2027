@@ -12,7 +12,7 @@ interface HotelInfoProps {
 
 const HotelInfoCard: React.FC<HotelInfoProps> = ({ hotels, tripId, isAdmin, onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [form, setForm] = useState({ name: '', address: '', checkIn: '', checkOut: '', confirmationNumber: '', notes: '' });
 
   const resetForm = () => {
@@ -37,7 +37,7 @@ const HotelInfoCard: React.FC<HotelInfoProps> = ({ hotels, tripId, isAdmin, onRe
     setShowForm(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string | number) => {
     await apiFetch(`${API_BASE}/api/hotels/${id}`, { method: 'DELETE' });
     onRefresh();
   };

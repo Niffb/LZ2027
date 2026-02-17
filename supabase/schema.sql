@@ -51,8 +51,36 @@ CREATE TABLE IF NOT EXISTS comments (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Hotels (accommodation)
+CREATE TABLE IF NOT EXISTS hotels (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id INTEGER NOT NULL DEFAULT 1,
+  name TEXT NOT NULL,
+  address TEXT,
+  check_in DATE,
+  check_out DATE,
+  confirmation_number TEXT,
+  notes TEXT
+);
+
+-- Flights
+CREATE TABLE IF NOT EXISTS flights (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id INTEGER NOT NULL DEFAULT 1,
+  airline TEXT NOT NULL,
+  flight_number TEXT,
+  departure_airport TEXT,
+  arrival_airport TEXT,
+  departure_time TIMESTAMPTZ,
+  arrival_time TIMESTAMPTZ,
+  booking_reference TEXT,
+  notes TEXT
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_itinerary_trip ON itinerary_items(trip_id);
+CREATE INDEX IF NOT EXISTS idx_hotels_trip ON hotels(trip_id);
+CREATE INDEX IF NOT EXISTS idx_flights_trip ON flights(trip_id);
 CREATE INDEX IF NOT EXISTS idx_activities_trip ON activities(trip_id);
 CREATE INDEX IF NOT EXISTS idx_votes_activity ON votes(activity_id);
 CREATE INDEX IF NOT EXISTS idx_comments_activity ON comments(activity_id);

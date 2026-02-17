@@ -47,7 +47,7 @@ export interface BudgetBreakdown {
 }
 
 export interface HotelInfo {
-  id: number;
+  id: string | number;
   trip_id: number;
   name: string;
   address: string;
@@ -58,7 +58,7 @@ export interface HotelInfo {
 }
 
 export interface FlightInfo {
-  id: number;
+  id: string | number;
   trip_id: number;
   airline: string;
   flight_number: string;

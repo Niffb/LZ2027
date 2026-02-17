@@ -12,7 +12,7 @@ interface FlightInfoProps {
 
 const FlightInfoCard: React.FC<FlightInfoProps> = ({ flights, tripId, isAdmin, onRefresh }) => {
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [form, setForm] = useState({ airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', departureTime: '', arrivalTime: '', bookingReference: '', notes: '' });
 
   const resetForm = () => {
@@ -37,7 +37,7 @@ const FlightInfoCard: React.FC<FlightInfoProps> = ({ flights, tripId, isAdmin, o
     setShowForm(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string | number) => {
     await apiFetch(`${API_BASE}/api/flights/${id}`, { method: 'DELETE' });
     onRefresh();
   };
