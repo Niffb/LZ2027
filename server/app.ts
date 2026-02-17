@@ -1,7 +1,7 @@
 import express from 'express';
 import cookieSession from 'cookie-session';
 import cors from 'cors';
-import { getDb } from './db.js';
+import { getDb, getDbError } from './db.js';
 import authRoutes from './routes/auth.js';
 import tripRoutes from './routes/trips.js';
 import itineraryRoutes from './routes/itinerary.js';
@@ -28,10 +28,18 @@ app.use(cookieSession({
   httpOnly: true,
 }));
 
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/api/health', (_req, res) => {
+  const dbErr = getDbError();
+  if (dbErr) return res.status(500).json({ ok: false, error: dbErr });
+  res.json({ ok: true });
+});
 
-app.use((req, _res, next) => {
-  (req as any).db = getDb();
+app.use((req, res, next) => {
+  try {
+    (req as any).db = getDb();
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
   next();
 });
 
