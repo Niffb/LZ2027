@@ -1,6 +1,6 @@
-# Deploying to Vercel (Free Tier)
+# Deploying to Vercel
 
-This app uses a **split deployment**: frontend on Vercel, backend on Render. Both have free tiers. The backend uses **Supabase** (PostgreSQL) for persistent data.
+This app runs entirely on Vercel: static frontend + Express API as serverless functions. Uses Supabase (PostgreSQL) for data.
 
 ---
 
@@ -8,61 +8,34 @@ This app uses a **split deployment**: frontend on Vercel, backend on Render. Bot
 
 1. Go to [supabase.com](https://supabase.com) and create a free project.
 2. In **Project Settings** → **API**, copy:
-   - **Project URL** → `SUPABASE_URL` and `VITE_SUPABASE_URL`
-   - **service_role key** (Secret) → `SUPABASE_SERVICE_ROLE_KEY` (backend only)
-   - **Publishable key** → `VITE_SUPABASE_ANON_KEY` (frontend auth)
-3. In **SQL Editor**, run `supabase/schema.sql`, then `supabase/migration-auth.sql`.
-4. Run `supabase/migration-password.sql` to add the password_hash column. Auth is custom (name + password), not Supabase Auth.
+   - **Project URL** → `SUPABASE_URL`
+   - **service_role key** (Secret) → `SUPABASE_SERVICE_ROLE_KEY`
+3. In **SQL Editor**, run:
+   - `supabase/schema.sql`
+   - `supabase/migration-password.sql` (adds password_hash column)
+   - Optional: `supabase/migration-clear-users.sql` (removes all users for fresh start)
 
 ---
 
-## Step 2: Deploy backend to Render
+## Step 2: Deploy to Vercel
 
-1. Push your code to GitHub (or connect Render to your repo).
-2. Go to [render.com](https://render.com) and sign up.
-3. **New** → **Web Service**.
-4. Connect your repo and choose it.
-5. Settings:
-   - **Build Command:** `npm install && npm run build`
-   - **Start Command:** `npm run server`
-   - **Plan:** Free
-
-6. **Environment variables:**
-   - `NODE_ENV` = `production`
-   - `SESSION_SECRET` = a random secret (e.g. from a password generator)
-   - `SUPABASE_URL` = your Supabase project URL
-   - `SUPABASE_SERVICE_ROLE_KEY` = your Supabase service role key
-
-7. Deploy. Your API URL will be something like `https://vaycay-api.onrender.com`.
-
-**Note:** Render's free tier sleeps after ~15 minutes of inactivity; the first request may take 30–60 seconds.
-
----
-
-## Step 3: Deploy frontend to Vercel
-
-1. Go to [vercel.com](https://vercel.com) and sign up.
-2. **Add New** → **Project** → import your repo.
-3. Settings (usually detected automatically):
-   - **Framework Preset:** Vite
+1. Push your code to GitHub and [import the repo on Vercel](https://vercel.com/new).
+2. Vercel will auto-detect:
+   - **Framework:** Vite
    - **Build Command:** `npm run build`
    - **Output Directory:** `dist`
+3. Add **Environment variables** in Vercel → Project → Settings → Environment Variables:
+   - `SUPABASE_URL` = your Supabase project URL
+   - `SUPABASE_SERVICE_ROLE_KEY` = your Supabase service role key
+   - `SESSION_SECRET` = random secret (e.g. from a password generator)
+4. Deploy.
 
-4. **Environment variables:**
-   - `VITE_API_URL` = your Render API URL (e.g. `https://vaycay-api.onrender.com`) – no trailing slash.
-
-5. Deploy.
-
-The `vercel.json` rewrites proxy `/api/*` requests to your Render backend, so you can use the Vercel URL directly.
+The API lives at `your-project.vercel.app/api/*`. No separate backend service needed.
 
 ---
 
 ## Local development
 
-1. Copy `.env.example` to `.env.local` and set all Supabase vars (URL, service role key, and VITE_ URL + anon key for frontend).
-2. Run:
-   - Frontend: `npm run dev`
-   - Backend: `npm run server`
-   - Or both: `npm run dev:all`
-
-Uses `http://localhost:3000` as the frontend and `http://localhost:3001` for the API (via Vite proxy).
+1. Copy `.env.example` to `.env.local` and set all vars.
+2. Run `npm run dev:all` (frontend + backend).
+3. Or separately: `npm run dev` and `npm run server`.

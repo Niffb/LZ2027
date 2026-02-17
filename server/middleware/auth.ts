@@ -1,20 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 
-declare module 'express-session' {
-  interface SessionData {
-    userId?: string;
+declare global {
+  namespace Express {
+    interface Request {
+      session?: { userId?: string } | null;
+    }
   }
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId) {
+  if (!req.session?.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   next();
 }
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId) {
+  if (!req.session?.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   const supabase = (req as any).db;
