@@ -10,7 +10,9 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
   useEffect(() => {
     if (!targetDate) return;
     const calculateTimeLeft = () => {
-      const target = +new Date(targetDate);
+      // Parse as local date (YYYY-MM-DD) so day/hour boundaries match user's timezone
+      const [y, m, d] = targetDate.split('-').map(Number);
+      const target = +new Date(y, (m || 1) - 1, d || 1);
       const now = +new Date();
       if (isNaN(target)) return;
       const difference = target - now;
