@@ -1,10 +1,10 @@
-# Render Blueprint - Deploy backend for free
+# Render Blueprint - Deploy full-stack app (frontend + backend) on one service
 # https://render.com/docs/blueprint-spec
 services:
   - type: web
     name: vaycay-api
     env: node
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: npm run server
     plan: free
     envVars:
@@ -12,5 +12,3 @@ services:
         value: production
       - key: SESSION_SECRET
         generateValue: true
-      - key: CORS_ORIGIN
-        value: https://lz-2027.vercel.app
