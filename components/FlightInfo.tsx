@@ -1,0 +1,126 @@
+import React, { useState } from 'react';
+import { FlightInfo as FlightInfoType } from '../types';
+import { API_BASE } from '../lib/api';
+import { Plane, Plus, X, Edit2, Check } from 'lucide-react';
+
+interface FlightInfoProps {
+  flights: FlightInfoType[];
+  tripId: number;
+  isAdmin: boolean;
+  onRefresh: () => void;
+}
+
+const FlightInfoCard: React.FC<FlightInfoProps> = ({ flights, tripId, isAdmin, onRefresh }) => {
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState({ airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', departureTime: '', arrivalTime: '', bookingReference: '', notes: '' });
+
+  const resetForm = () => {
+    setForm({ airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', departureTime: '', arrivalTime: '', bookingReference: '', notes: '' });
+    setShowForm(false);
+    setEditingId(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.airline) return;
+    const url = editingId ? `${API_BASE}/api/flights/${editingId}` : `${API_BASE}/api/trips/${tripId}/flights`;
+    const method = editingId ? 'PUT' : 'POST';
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(form) });
+    resetForm();
+    onRefresh();
+  };
+
+  const handleEdit = (flight: FlightInfoType) => {
+    setForm({ airline: flight.airline, flightNumber: flight.flight_number, departureAirport: flight.departure_airport, arrivalAirport: flight.arrival_airport, departureTime: flight.departure_time, arrivalTime: flight.arrival_time, bookingReference: flight.booking_reference, notes: flight.notes });
+    setEditingId(flight.id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    await fetch(`${API_BASE}/api/flights/${id}`, { method: 'DELETE', credentials: 'include' });
+    onRefresh();
+  };
+
+  return (
+    <div className="card p-5">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+          <Plane size={16} className="text-primary" />
+          Flights
+        </h2>
+        {isAdmin && !showForm && (
+          <button onClick={() => setShowForm(true)} className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
+            <Plus size={14} /> Add
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-2.5">
+          <div className="grid grid-cols-2 gap-2.5">
+            <input value={form.airline} onChange={e => setForm({ ...form, airline: e.target.value })} placeholder="Airline *" required className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+            <input value={form.flightNumber} onChange={e => setForm({ ...form, flightNumber: e.target.value })} placeholder="Flight #" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <input value={form.departureAirport} onChange={e => setForm({ ...form, departureAirport: e.target.value })} placeholder="From (airport)" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+            <input value={form.arrivalAirport} onChange={e => setForm({ ...form, arrivalAirport: e.target.value })} placeholder="To (airport)" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider">Departure</label>
+              <input type="datetime-local" value={form.departureTime} onChange={e => setForm({ ...form, departureTime: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider">Arrival</label>
+              <input type="datetime-local" value={form.arrivalTime} onChange={e => setForm({ ...form, arrivalTime: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+            </div>
+          </div>
+          <input value={form.bookingReference} onChange={e => setForm({ ...form, bookingReference: e.target.value })} placeholder="Booking reference" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" />
+          <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Notes" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white" rows={2} />
+          <div className="flex gap-2">
+            <button type="submit" className="bg-primary text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1"><Check size={12} /> {editingId ? 'Update' : 'Add'}</button>
+            <button type="button" onClick={resetForm} className="text-slate-400 px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100"><X size={12} /></button>
+          </div>
+        </form>
+      )}
+
+      {flights.length === 0 && !showForm && (
+        <p className="text-slate-400 text-xs">No flight info yet.</p>
+      )}
+
+      <div className="space-y-2.5">
+        {flights.map(flight => (
+          <div key={flight.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-slate-800">{flight.airline}{flight.flight_number && ` ${flight.flight_number}`}</p>
+                {(flight.departure_airport || flight.arrival_airport) && (
+                  <p className="text-xs text-slate-500 mt-0.5">{flight.departure_airport} → {flight.arrival_airport}</p>
+                )}
+              </div>
+              {isAdmin && (
+                <div className="flex gap-0.5">
+                  <button onClick={() => handleEdit(flight)} className="p-1 text-slate-400 hover:text-primary"><Edit2 size={12} /></button>
+                  <button onClick={() => handleDelete(flight.id)} className="p-1 text-slate-400 hover:text-red-500"><X size={12} /></button>
+                </div>
+              )}
+            </div>
+            {(flight.departure_time || flight.arrival_time) && (
+              <div className="mt-2 flex gap-3 text-[11px] text-slate-500">
+                {flight.departure_time && <span>Dep: {new Date(flight.departure_time).toLocaleString()}</span>}
+                {flight.arrival_time && <span>Arr: {new Date(flight.arrival_time).toLocaleString()}</span>}
+              </div>
+            )}
+            {flight.booking_reference && (
+              <p className="mt-1 text-[11px] text-slate-500">Ref: <span className="font-mono font-medium text-slate-700">{flight.booking_reference}</span></p>
+            )}
+            {flight.notes && <p className="mt-1 text-xs text-slate-600">{flight.notes}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default FlightInfoCard;

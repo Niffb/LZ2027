@@ -1,0 +1,18 @@
+# Render Blueprint - Deploy backend for free
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: vaycay-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm run server
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false  # Set in Render dashboard to your Vercel URL, e.g. https://your-app.vercel.app
+      - key: GEMINI_API_KEY
+        sync: false  # Add your Gemini API key in Render dashboard

@@ -1,0 +1,5 @@
+{
+  "name": "Holiday Dashboard",
+  "description": "A family holiday planning dashboard featuring itinerary management, activity voting, budget tracking, and AI-powered suggestions.",
+  "requestFramePermissions": []
+}
