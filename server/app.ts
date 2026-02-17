@@ -9,15 +9,14 @@ import activityRoutes from './routes/activities.js';
 import travelInfoRoutes from './routes/travel-info.js';
 import memberRoutes from './routes/members.js';
 
-const isVercel = !!process.env.VERCEL;
 const isProduction = process.env.NODE_ENV === 'production';
 
 const app = express();
 
-if (!isVercel) {
-  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
-  app.use(cors({ origin: corsOrigin, credentials: true }));
-}
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use(cookieSession({
@@ -25,7 +24,7 @@ app.use(cookieSession({
   keys: [process.env.SESSION_SECRET || 'holiday-dashboard-family-secret'],
   maxAge: 7 * 24 * 60 * 60 * 1000,
   secure: isProduction,
-  sameSite: isProduction ? 'none' : 'lax',
+  sameSite: 'lax',
   httpOnly: true,
 }));
 
