@@ -163,6 +163,13 @@ export default function App() {
     addToItinerary({ id: '', day: 1, time: '10:00', activity: pin.title, location: pin.description, costEUR: pin.costEUR });
   };
 
+  const deleteItineraryItem = async (id: string) => {
+    try {
+      const res = await apiFetch(`${API_BASE}/api/itinerary/${id}`, { method: 'DELETE' });
+      if (res.ok) setItinerary(itinerary.filter(i => i.id !== id));
+    } catch (err) { console.error('Failed to delete itinerary item:', err); }
+  };
+
   const nightsCount = trip
     ? Math.max(0, Math.round((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
@@ -337,7 +344,7 @@ export default function App() {
         )}
 
         {activeTab === 'itinerary' && trip && (
-          <Itinerary items={itinerary} onAdd={addToItinerary} trip={trip} currentUser={user} />
+          <Itinerary items={itinerary} onAdd={addToItinerary} onDelete={deleteItineraryItem} trip={trip} currentUser={user} />
         )}
 
         {activeTab === 'pins' && trip && (

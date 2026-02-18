@@ -297,7 +297,7 @@ app.post('/api/trips/:tripId/itinerary', requireAdmin, async (req: any, res) => 
   res.json(data);
 });
 
-app.delete('/api/itinerary/:id', requireAdmin, async (req: any, res) => {
+app.delete('/api/itinerary/:id', requireAuth, async (req: any, res) => {
   const db = req.db;
   const { error } = await db.from('itinerary_items').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });

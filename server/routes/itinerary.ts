@@ -39,7 +39,7 @@ router.post('/trips/:tripId/itinerary', requireAdmin, async (req, res) => {
   res.json(item);
 });
 
-router.delete('/itinerary/:id', requireAdmin, async (req, res) => {
+router.delete('/itinerary/:id', requireAuth, async (req, res) => {
   const supabase = (req as any).db;
   const { error } = await supabase.from('itinerary_items').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });

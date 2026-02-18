@@ -5,11 +5,12 @@ import { Plus, MapPin, Euro, X } from 'lucide-react';
 interface ItineraryProps {
   items: ItineraryItem[];
   onAdd: (item: ItineraryItem) => void;
+  onDelete: (id: string) => void;
   trip: TripDetails;
   currentUser: User;
 }
 
-const Itinerary: React.FC<ItineraryProps> = ({ items, onAdd, trip, currentUser }) => {
+const Itinerary: React.FC<ItineraryProps> = ({ items, onAdd, onDelete, trip, currentUser }) => {
   const [showForm, setShowForm] = useState(false);
   const [newItem, setNewItem] = useState<Partial<ItineraryItem>>({ day: 1, time: '10:00', activity: '', location: '', costEUR: 0 });
 
@@ -100,11 +101,20 @@ const Itinerary: React.FC<ItineraryProps> = ({ items, onAdd, trip, currentUser }
                         <p className="text-xs text-slate-500 flex items-center gap-1"><MapPin size={10}/> {item.location}</p>
                       )}
                     </div>
-                    {item.costEUR > 0 && (
-                      <span className="text-xs font-medium text-slate-600 bg-white px-2 py-1 rounded-lg border border-slate-100 flex items-center gap-0.5 shrink-0">
-                        <Euro size={10} /> {item.costEUR}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {item.costEUR > 0 && (
+                        <span className="text-xs font-medium text-slate-600 bg-white px-2 py-1 rounded-lg border border-slate-100 flex items-center gap-0.5">
+                          <Euro size={10} /> {item.costEUR}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => onDelete(item.id)}
+                        className="p-2 text-slate-400 hover:text-red-500 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
+                        title="Remove"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
